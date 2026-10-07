@@ -28,7 +28,16 @@ Il profilo d'esempio è di un artista immaginario di Bologna. Chiama `leggi_prof
 3. **Come**: lingue in cui può candidarsi, quota d'iscrizione massima, se si candida solo come persona o anche con un'associazione o una partita IVA, settimane che può passare fuori casa.
 4. **Cosa**: 4-8 temi ricorrenti del suo lavoro e un curriculum in due righe (premi, residenze, mostre).
 
-Salva ogni risposta con `aggiorna_profilo(campo, valore)`, usando i nomi di campo esatti di `leggi_profilo`. Le liste vanno separate da virgole. Alla fine chiama `ricalcola_punteggi`.
+Salva ogni risposta con `aggiorna_profilo(campo, valore)`, usando i nomi di campo esatti di `leggi_profilo`. Ogni campo ha una nota che spiega cosa cambia: usala per formulare la domanda. Le liste vanno separate da virgole. Il profilo viene copiato da solo in `personale/profilo.csv` dentro la cartella dati, fuori da git.
+
+5. **Cosa conta di più**: proponi un preset di pesi in base a quello che ti ha detto, e applicalo con `applica_preset_pesi` dopo il suo ok:
+   - `equilibrato`: per cominciare;
+   - `conta il tema`: ha una ricerca precisa;
+   - `vicino a casa`: non può spostarsi molto;
+   - `carriera`: punta a festival e istituzioni note;
+   - `budget stretto`: vuole solo bandi gratuiti e pagati.
+
+Alla fine chiama `ricalcola_punteggi` (se non hai già usato il preset). Indica all'utente la guida completa: `docs/GUIDA-PROFILO.md`.
 
 Privacy: nel profilo vanno solo dati professionali. Non chiedere indirizzo, email, telefono o dati economici. La cartella dati non va mai su git.
 

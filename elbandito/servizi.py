@@ -76,6 +76,7 @@ def dati(foglio: FoglioBase) -> dict:
         "bandi": bandi,
         "candidature": candidature,
         "profilo": {r["Campo"]: r.get("Valore", "") for r in foglio.leggi("PROFILO") if r.get("Campo")},
+        "profiloNote": {r["Campo"]: r.get("Note", "") for r in foglio.leggi("PROFILO") if r.get("Campo")},
         "fonti": foglio.leggi("FONTI"),
         "enti": foglio.leggi("ENTI"),
         "log": list(reversed(foglio.leggi("LOG")[-15:])),

@@ -245,8 +245,27 @@ def contesto_ricerca() -> dict:
 def aggiorna_profilo(campo: str, valore: str) -> str:
     """Cambia (o aggiunge) un campo del profilo: es. "Temi", "Quota massima", "Peso tema", "Luoghi casa".
     Dopo modifiche a pesi o filtri usa ricalcola_punteggi."""
+    from .configura import salva_copia_personale
+
     servizi.salva_profilo(_foglio(), campo, valore)
+    salva_copia_personale(_amb())  # copia fuori da git, riusata se il foglio viene ricreato
     return f"{campo} = {valore}"
+
+
+@mcp.tool()
+def applica_preset_pesi(preset: str) -> dict:
+    """Imposta i sei pesi del punteggio da un'intenzione: equilibrato | conta il tema | vicino a casa |
+    carriera | budget stretto. Poi ricalcola i punteggi. Chiedi conferma all'utente prima di usarlo."""
+    from .configura import PRESET_PESI, salva_copia_personale
+    from .pipeline import ricalcola
+
+    if preset not in PRESET_PESI:
+        raise ValueError(f"Preset sconosciuto. Possibili: {', '.join(PRESET_PESI)}")
+    foglio = _foglio()
+    for k, v in PRESET_PESI[preset].items():
+        servizi.salva_profilo(foglio, f"Peso {k}", str(v))
+    salva_copia_personale(_amb())
+    return {"pesi": PRESET_PESI[preset], "ricalcolati": ricalcola(_amb())}
 
 
 @mcp.tool()

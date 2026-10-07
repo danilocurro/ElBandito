@@ -93,8 +93,8 @@ function nonPrimaDiOggi_(iso) { return iso && iso < oggi_() ? oggi_() : iso; }
 // ---------------------------------------------------------------- lettura
 
 function getBandi() {
-  var profilo = {};
-  leggi_('PROFILO').forEach(function (r) { profilo[r.Campo] = r.Valore; });
+  var profilo = {}, profiloNote = {};
+  leggi_('PROFILO').forEach(function (r) { profilo[r.Campo] = r.Valore; profiloNote[r.Campo] = r.Note || ''; });
   var bandi = leggi_('BANDI').filter(function (b) { return b.Stato !== 'Archiviato'; });
   bandi.forEach(function (b) {
     try { b['Dettaglio punteggio'] = b['Dettaglio punteggio'] ? JSON.parse(b['Dettaglio punteggio']) : {}; }
@@ -110,6 +110,7 @@ function getBandi() {
     bandi: bandi,
     candidature: candidature,
     profilo: profilo,
+    profiloNote: profiloNote,
     fonti: leggi_('FONTI'),
     enti: leggi_('ENTI'),
     log: leggi_('LOG').slice(-15).reverse(),

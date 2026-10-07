@@ -312,8 +312,36 @@ def aggiungi_da_link(url: str, amb: Ambiente | None = None) -> Resoconto:
     return g.res
 
 
+def scheda_da_riga(b: dict):
+    """Ricostruzione approssimata di una scheda dalle colonne del foglio (se manca lo storico grezzo)."""
+    from .modelli import TIPI, SchedaEstratta
+
+    valore = re.findall(r"\d[\d.]*", str(b.get("Valore", "")).replace(".000", "000"))
+    quota = str(b.get("Quota iscrizione", "")).replace(",", ".")
+    return SchedaEstratta(
+        titolo=b.get("Titolo", ""), ente=b.get("Ente", ""),
+        tipo=b.get("Tipo") if b.get("Tipo") in TIPI else "altro", disciplina=b.get("Disciplina", ""),
+        temi=[t.strip() for t in str(b.get("Temi", "")).split(",") if t.strip()],
+        paese=b.get("Paese", ""), regione=b.get("Regione", ""),
+        citta="" if b.get("Città") == "online" else b.get("Città", ""), online=b.get("Città") == "online",
+        quota_iscrizione_eur=float(quota) if re.fullmatch(r"\d+(\.\d+)?", quota) else None,
+        valore=b.get("Valore", ""), valore_eur=max((float(v) for v in valore if v.replace(".", "").isdigit()), default=None),
+        include_mostra=bool(re.search(r"mostra|esposizion|catalogo|pubblicazion", str(b.get("Valore", "")), re.I)),
+        copre_alloggio=bool(re.search(r"alloggio|accommodation", str(b.get("Valore", "")), re.I)),
+        copre_viaggio=bool(re.search(r"viaggio|travel", str(b.get("Valore", "")), re.I)),
+        eleggibilita=b.get("Eleggibilità", ""),
+        lingue_candidatura=[x.strip() for x in str(b.get("Lingua candidatura", "")).split(",") if x.strip()],
+        date_attivita=b.get("Date attività", ""),
+    )
+
+
 def ricalcola(amb: Ambiente | None = None) -> int:
-    """Ricalcola punteggi ed esclusioni dopo un cambio di PROFILO o pesi (dallo storico grezzo)."""
+    """Ricalcola punteggi ed esclusioni dopo un cambio di PROFILO o pesi.
+
+    Usa la scheda completa dallo storico grezzo; se manca (archivio perso,
+    righe aggiunte a mano) la ricostruisce dalle colonne e conserva le
+    esclusioni che la ricostruzione non può rivedere (età, solo enti…).
+    """
     from .modelli import SchedaEstratta
     from datetime import date
 
@@ -321,12 +349,19 @@ def ricalcola(amb: Ambiente | None = None) -> int:
     grezzi = {imp: json.loads(s) for imp, s in g.arch.db.execute("SELECT impronta, scheda FROM grezzi ORDER BY id")}
     n = 0
     for b in g.bandi:
-        if b.get("Impronta") not in grezzi:
+        if not b.get("Titolo"):
             continue
-        scheda = SchedaEstratta.model_validate(grezzi[b["Impronta"]])
+        completa = b.get("Impronta") in grezzi
+        scheda = SchedaEstratta.model_validate(grezzi[b["Impronta"]]) if completa else scheda_da_riga(b)
         scad = date.fromisoformat(b["Scadenza"]) if b.get("Scadenza") else None
         v = SchedaVerificata(scheda, scad, b.get("Scadenza confermata") == "sicura", b.get("Estratto", ""))
+        esclusione_prima = b.get("Esclusione", "")
         _applica_esito(b, v, g.profilo, g.enti)
+        if not completa and esclusione_prima:
+            nuove = [m for m in b["Esclusione"].split("; ") if m]
+            vecchie = [m for m in esclusione_prima.split("; ")
+                       if m and not m.startswith(("Quota", "Lingua", "Scadenza troppo"))]  # queste si rivalutano
+            b["Esclusione"] = "; ".join(dict.fromkeys(vecchie + nuove))
         g.modifiche[b["ID"]] = {c: b[c] for c in ("Punteggio", "Dettaglio punteggio", "Motivazione", "Rischi", "Esclusione")}
         n += 1
     g.foglio.aggiorna("BANDI", "ID", g.modifiche)

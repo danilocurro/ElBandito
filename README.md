@@ -12,7 +12,7 @@ Il primo tema configurato è la fotografia d'autore, ma tema, fonti, profilo e p
 
 | | Ti serve | Cosa ottieni |
 | --- | --- | --- |
-| **1. Dentro Claude Code** (consigliato) | [Claude Code](https://claude.com/claude-code) + [uv](https://docs.astral.sh/uv/) | Server MCP con 23 strumenti, 4 skill, regole. Claude raccoglie, estrae le schede, cerca sul web, spiega i punteggi, scrive bozze di statement. **Nessuna chiave API necessaria** |
+| **1. Dentro Claude Code** (consigliato) | [Claude Code](https://claude.com/claude-code) + [uv](https://docs.astral.sh/uv/) | Server MCP con 24 strumenti, 4 skill, regole. Claude raccoglie, estrae le schede, cerca sul web, spiega i punteggi, scrive bozze di statement. **Nessuna chiave API necessaria** |
 | **2. Dashboard locale** | uv | L'interfaccia completa nel browser (Oggi, Esplora con mappa e calendario, Pipeline, Enti, Fonti, Profilo) sui tuoi dati locali |
 | **3. Automatico nel cloud** (facoltativo) | GitHub, un foglio Google, chiave Gemini gratuita | Giro ogni mattina su GitHub Actions, foglio Google come database, web app Apps Script ed email: digest del lunedì, avvisi, promemoria |
 
@@ -33,6 +33,20 @@ uv run elbandito dashboard
 ```
 
 `demo` crea nove bandi **inventati** (marcati "(esempio)") che passano dai filtri e dal punteggio veri, con il profilo d'esempio di un artista immaginario. La dashboard si apre su `http://127.0.0.1:8787`.
+
+## Il tuo profilo
+
+ElBandito parte con il profilo di un artista immaginario. Per avere un ordine che abbia senso per te, compila il tuo in uno dei tre modi qui sotto. Bastano dieci minuti.
+
+| Modo | Come |
+| --- | --- |
+| Parlando con Claude Code | «impostiamo il mio profilo» (skill `elbandito-avvio`) |
+| Questionario da terminale | `uv run elbandito configura` |
+| A mano | vista **Profilo** della dashboard: ogni campo ha una nota d'aiuto e ci sono i preset dei pesi |
+
+I campi decisivi sono: tema e discipline, anno di nascita (limiti d'età), luoghi "casa" e "vicini", lingue, quota massima, temi del tuo lavoro. Poi scegli un preset di pesi (`equilibrato`, `conta il tema`, `vicino a casa`, `carriera`, `budget stretto`). Dopo circa 15 decisioni (*Mi interessa* o *Scarta*), Claude Code può ritoccare i pesi sulle tue scelte reali.
+
+Tutto resta nella tua cartella dati, esclusa da git. **[docs/GUIDA-PROFILO.md](docs/GUIDA-PROFILO.md)** spiega ogni campo, il calcolo del punteggio con un esempio, i preset, la taratura, enti, fonti e insieme d'oro.
 
 ## In Claude Code
 
@@ -59,7 +73,7 @@ Da plugin i dati stanno in `~/.elbandito/`. Dal clone stanno in `dati/` dentro l
 
 ### Cosa c'è per Claude Code
 
-- **`.mcp.json`**: il server `elbandito` (`uv run elbandito mcp`). Strumenti per consultare (`stato`, `cerca_bandi`, `scheda_bando`, `leggi_profilo`, `elenco_fonti`), raccogliere (`esegui_giro`, `pagine_da_estrarre`, `salva_schede`, `aggiungi_da_link`, `contesto_ricerca`), agire (`registra_azione`, `conferma_scadenza`, `spunta_materiale`, `salva_nota`, `salva_approfondimento`), configurare (`aggiorna_profilo`, `aggiungi_fonte`, `attiva_fonte`, `ricalcola_punteggi`) e vedere (`apri_dashboard`, `esporta_calendario`, `crea_dati_esempio`, `richiamo_insieme_oro`).
+- **`.mcp.json`**: il server `elbandito` (`uv run elbandito mcp`). Strumenti per consultare (`stato`, `cerca_bandi`, `scheda_bando`, `leggi_profilo`, `elenco_fonti`), raccogliere (`esegui_giro`, `pagine_da_estrarre`, `salva_schede`, `aggiungi_da_link`, `contesto_ricerca`), agire (`registra_azione`, `conferma_scadenza`, `spunta_materiale`, `salva_nota`, `salva_approfondimento`), configurare (`aggiorna_profilo`, `applica_preset_pesi`, `aggiungi_fonte`, `attiva_fonte`, `ricalcola_punteggi`) e vedere (`apri_dashboard`, `esporta_calendario`, `crea_dati_esempio`, `richiamo_insieme_oro`).
 - **Skill** in `skills/`: `elbandito-avvio` (prova e profilo), `elbandito-raccolta` (giro ed estrazione), `elbandito-ricerca` (ricerca web e nuove fonti), `elbandito-valuta` (analisi, cerca a fondo, statement, stato, pesi).
 - **`CLAUDE.md`**: le regole. Mai inviare candidature, mai spacciare per certe le date da verificare, privacy dei dati.
 - **`.claude-plugin/`**: manifest del plugin e del marketplace.
@@ -88,7 +102,7 @@ Le chiavi vanno in un file `.env` nella cartella dati: parti da `.env.esempio`. 
 
 - Tutto ciò che è tuo sta nella cartella dati: le schede del foglio in CSV (`foglio/`), l'archivio SQLite, `.env` e `personale/`. È esclusa da git.
 - `seed/` contiene solo esempi anonimi: circa 40 fonti pubbliche italiane ed europee, enti noti, un profilo d'esempio e un insieme d'oro di prova.
-- Per partire dai *tuoi* valori metti in `personale/` (dentro la cartella dati) i tuoi `profilo.csv`, `enti.csv`, `fonti.csv` e `insieme_oro.csv`, con le stesse colonne dei file in `seed/`. Hanno la precedenza sul seed quando il foglio viene creato.
+- `personale/` (dentro la cartella dati) contiene i tuoi file di partenza: `profilo.csv`, `enti.csv`, `fonti.csv` e `insieme_oro.csv`, con le stesse colonne dei file in `seed/`. Hanno la precedenza sul seed quando il foglio viene creato. `elbandito configura` e Claude Code tengono aggiornata da soli la copia del profilo.
 - Il foglio Google, se lo usi, sostituisce i CSV: imposta `ELBANDITO_SHEET_ID` e le credenziali del service account.
 
 ## Automazione nel cloud (facoltativa)
@@ -133,7 +147,8 @@ ElBandito/
   skills/              skill per Claude Code (anche in .claude/skills)
   apps-script/         Codice.gs + Index.html (l'unica interfaccia, usata anche in locale)
   seed/                fonti, enti, profilo d'esempio, insieme d'oro (anonimi)
-  tests/               57 test, senza rete né chiavi
+  docs/                guida al profilo e alla taratura
+  tests/               test automatici, senza rete né chiavi
   .github/workflows/   giornaliero · settimanale · su-richiesta · test
   .mcp.json  CLAUDE.md  .claude-plugin/
 ```
@@ -144,7 +159,7 @@ ElBandito/
 uv run elbandito --help
 ```
 
-I comandi sono: `demo`, `dashboard`, `mcp`, `coda`, `prepara`, `giornaliero`, `settimanale`, `link URL`, `approfondisci ID`, `ricalcola` e `richiamo` (copertura e richiamo dell'insieme d'oro, il test di regressione della rete di fonti).
+I comandi sono: `configura`, `demo`, `dashboard`, `mcp`, `coda`, `prepara`, `giornaliero`, `settimanale`, `link URL`, `approfondisci ID`, `ricalcola` e `richiamo` (copertura e richiamo dell'insieme d'oro, il test di regressione della rete di fonti).
 
 ```bash
 uv run pytest -q

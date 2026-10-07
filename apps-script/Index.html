@@ -415,13 +415,53 @@ function nuovaFonte() {
   chiama('aggiungiFonte', f).then(function (j) { carica(j); avvisa('Fonte aggiunta: verrà letta al prossimo giro'); });
 }
 
+var SEZIONI_PROFILO = [
+  ['Chi sei', ['Tema', 'Discipline piene', 'Discipline metà', 'Anno di nascita', 'Nazionalità', "Nome d'arte"]],
+  ['Dove sei', ['Base', 'Città di riferimento', 'Base lat', 'Base lon', 'Paese', 'Regioni di residenza', 'Luoghi casa', 'Etichetta casa', 'Luoghi vicini', 'Etichetta vicini']],
+  ['Come ti candidi (filtri rigidi)', ['Si candida come', 'Lingue', 'Quota massima', 'Giorni minimi preparazione', 'Disponibilità fuori casa (settimane)']],
+  ['Il tuo lavoro', ['Temi', 'Curriculum', 'Parole chiave']],
+  ['Pesi del punteggio', ['Peso disciplina', 'Peso tema', 'Peso geografia', 'Peso valore', 'Peso prestigio', 'Peso costo', 'Soglia avviso']],
+  ['Motori e modelli', ['Motore estrazione', 'Motore ricerca', 'Modello estrazione', 'Modello ripiego', 'Modello ricerca', 'Ricerche settimanali', 'Filoni ricerca']]
+];
+var PRESET_PESI = {
+  'equilibrato':    [25, 5, 10, 15, 15, 15],
+  'conta il tema':  [20, 25, 10, 15, 15, 15],
+  'vicino a casa':  [20, 10, 30, 15, 10, 15],
+  'carriera':       [20, 10, 5, 20, 30, 15],
+  'budget stretto': [20, 10, 10, 20, 10, 30]
+};
+
+function campoProfilo(c) {
+  var nota = (D.profiloNote || {})[c] || '';
+  return '<tr><th style="width:240px">' + esc(c) + '</th><td><input type="text" style="width:100%" value="' + esc(D.profilo[c] === undefined ? '' : D.profilo[c]) +
+    '" onchange="chiama(\'salvaProfilo\',' + JSON.stringify(c).replace(/"/g, '&quot;') + ',this.value).then(function(j){carica(j);avvisa(\'Salvato: premi Ricalcola ora per aggiornare i punteggi\')})">' +
+    (nota ? '<div class="sotto">' + esc(nota) + '</div>' : '') + '</td></tr>';
+}
+
+function applicaPreset(nome) {
+  var nomi = ['disciplina', 'tema', 'geografia', 'valore', 'prestigio', 'costo'];
+  var catena = Promise.resolve();
+  nomi.forEach(function (k, i) { catena = catena.then(function () { return chiama('salvaProfilo', 'Peso ' + k, String(PRESET_PESI[nome][i])); }); });
+  catena.then(function () { return chiama('avviaCollettore', 'ricalcola', ''); })
+    .then(function (msg) { avvisa('Preset "' + nome + '" applicato. ' + msg); return chiama('getBandi'); }).then(carica);
+}
+
 function vistaProfilo() {
-  var campi = Object.keys(D.profilo);
-  return '<h2>Profilo e pesi</h2><p class="sotto">Questi valori guidano filtri e punteggio. Dopo una modifica, i punteggi si aggiornano al prossimo giro (o con "Ricalcola ora").</p>' +
-    '<div class="filtri"><button class="bottone" onclick="chiama(\'avviaCollettore\',\'ricalcola\',\'\').then(avvisa)">Ricalcola ora</button></div>' +
-    '<table class="dati">' + campi.map(function (c) {
-      return '<tr><th style="width:240px">' + esc(c) + '</th><td><input type="text" style="width:100%" value="' + esc(D.profilo[c]) + '" onchange="chiama(\'salvaProfilo\',' + JSON.stringify(c).replace(/"/g, '&quot;') + ',this.value).then(function(j){carica(j);avvisa(\'Salvato\')})"></td></tr>';
-    }).join('') + '</table>';
+  var noti = {};
+  SEZIONI_PROFILO.forEach(function (s) { s[1].forEach(function (c) { noti[c] = 1; }); });
+  var altri = Object.keys(D.profilo).filter(function (c) { return !noti[c]; });
+  var sezioni = SEZIONI_PROFILO.concat(altri.length ? [['Altro', altri]] : []);
+  return '<h2>Il tuo profilo</h2><p class="sotto">Questi valori decidono quali bandi vengono esclusi e in che ordine compaiono gli altri. ' +
+    'Restano nei tuoi dati, mai nel repository. La guida campo per campo è in <b>docs/GUIDA-PROFILO.md</b>; in Claude Code puoi anche dire «impostiamo il mio profilo».</p>' +
+    '<div class="filtri"><button class="bottone pieno" onclick="chiama(\'avviaCollettore\',\'ricalcola\',\'\').then(avvisa)">Ricalcola ora</button></div>' +
+    sezioni.map(function (s) {
+      var campi = s[1].filter(function (c) { return c in D.profilo; });
+      if (!campi.length) return '';
+      var extra = s[0] === 'Pesi del punteggio' ? '<div class="filtri">Preset: ' + Object.keys(PRESET_PESI).map(function (n) {
+        return '<button class="bottone piccolo" title="' + PRESET_PESI[n].join(' · ') + '" onclick="applicaPreset(\'' + n + '\')">' + n + '</button>';
+      }).join('') + '</div><p class="sotto">Ogni componente vale al massimo il suo peso; il totale è riportato su 100. Apri un bando per vedere le barre per componente.</p>' : '';
+      return '<h2>' + esc(s[0]) + '</h2>' + extra + '<table class="dati">' + campi.map(campoProfilo).join('') + '</table>';
+    }).join('');
 }
 
 /* ------------------------------------------------------------------ scheda bando */
@@ -563,6 +603,7 @@ var DEMO = {
   risposta: function (nome) {
     if (nome === 'getBandi') return DEMO.dati();
     if (nome === 'esportaICS') return 'BEGIN:VCALENDAR\r\nEND:VCALENDAR';
+    if (nome === 'avviaCollettore') return 'Anteprima: il ricalcolo funziona nella dashboard locale o nella web app.';
     if (nome === 'assistente') return JSON.stringify({ risposta: 'Anteprima locale: l\'assistente risponde solo nella web app.', azioni: [] });
     avvisa('Anteprima locale: "' + nome + '" funziona solo nella web app');
     return DEMO.dati();

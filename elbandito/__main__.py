@@ -1,5 +1,6 @@
 """Riga di comando: python -m elbandito <comando>.
 
+  configura     questionario guidato per il tuo profilo (temi, luoghi, quota, pesi)
   demo          prepara il foglio locale con 9 bandi d'esempio (prova senza chiavi)
   dashboard     apre l'interfaccia nel browser (http://127.0.0.1:8787)
   mcp           server MCP per Claude Code (stdio)
@@ -22,7 +23,7 @@ import sys
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="elbandito", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("comando", choices=["demo", "dashboard", "mcp", "coda", "prepara", "giornaliero", "settimanale", "link", "approfondisci", "ricalcola", "richiamo"])
+    ap.add_argument("comando", choices=["configura", "demo", "dashboard", "mcp", "coda", "prepara", "giornaliero", "settimanale", "link", "approfondisci", "ricalcola", "richiamo"])
     ap.add_argument("url", nargs="?", help="URL (link) o ID del bando (approfondisci)")
     ap.add_argument("-v", "--verboso", action="store_true")
     a = ap.parse_args(argv)
@@ -37,6 +38,12 @@ def main(argv: list[str] | None = None) -> int:
         from .mcp_server import main as servi
 
         servi()
+        return 0
+
+    if a.comando == "configura":
+        from .configura import configura
+
+        configura(amb)
         return 0
 
     if a.comando == "demo":

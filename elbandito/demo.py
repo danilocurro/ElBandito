@@ -105,6 +105,12 @@ def crea_demo(amb: Ambiente | None = None, foglio: FoglioBase | None = None, for
         _applica_esito(riga, v, profilo, enti)
         righe.append(riga)
     foglio.aggiungi("BANDI", righe)
+    from .archivio import Archivio
+
+    arch = Archivio(amb.cartella_dati / "archivio.sqlite")  # storico grezzo: serve a "Ricalcola"
+    for r, (_, _, _, _, campi) in zip(righe, ESEMPI):
+        arch.conserva("demo", r["Link bando"], r["Impronta"], {**campi, "scadenza": r["Scadenza"]})
+    arch.chiudi()
     from . import servizi
 
     for r in righe:

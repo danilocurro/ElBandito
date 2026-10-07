@@ -1,36 +1,36 @@
 Campo,Valore,Note
-Tema,fotografia,"Cambiando tema e fonti, lo stesso motore cerca altro (es. cinema documentario, editoria)"
-Nome d'arte,Artista di esempio,Solo per i prompt; puoi lasciarlo così
-Anno di nascita,1990,"Serve per i limiti d'età (under 30, under 35…)"
-Base,Bologna,Città dove vivi o lavori
-Città di riferimento,Bologna,Etichetta sulla mappa e per le distanze
-Base lat,44.4949,
-Base lon,11.3426,
-Nazionalità,italiana,
-Paese,Italia,
-Regioni di residenza,Emilia-Romagna,Per i bandi riservati ai residenti
-Luoghi casa,"Emilia-Romagna, Bologna, Modena, Parma, Reggio Emilia, Ferrara, Ravenna, Rimini, Piacenza, Forlì, Cesena",Geografia: punteggio pieno
-Etichetta casa,Emilia-Romagna,
-Luoghi vicini,"Toscana, Veneto, Lombardia, Marche, Liguria, Firenze, Venezia, Milano",Geografia: 80%
-Etichetta vicini,regioni vicine,
-Si candida come,persona,persona | persona e associazione | persona e partita IVA
-Lingue,"italiano, inglese",
-Quota massima,50,Euro; sopra questa soglia il bando è escluso
-Giorni minimi preparazione,7,Sotto questi giorni alla scadenza il bando è escluso
-Disponibilità fuori casa (settimane),4,
-Discipline piene,"fotografia, lens-based, fotografia d'autore, documentario, photography",
-Discipline metà,"arti visive, multidisciplinare, video, cinema, visual arts",
-Temi,"paesaggio, territorio, memoria, acqua, migrazione, archivio, comunità",Temi ricorrenti del tuo lavoro
-Parole chiave,"bando fotografia, open call fotografia, premio fotografia, residenza artistica, photography open call, artist residency, photography grant, photo award",Usate dal connettore wordpress e da SearXNG
-Curriculum,Mostre collettive in Italia; un premio nazionale di fotografia; una residenza in Europa.,Solo dati professionali: entra nei prompt
-Paesi UE,"Austria, Belgio, Bulgaria, Cipro, Croazia, Danimarca, Estonia, Finlandia, Francia, Germania, Grecia, Irlanda, Lettonia, Lituania, Lussemburgo, Malta, Paesi Bassi, Polonia, Portogallo, Repubblica Ceca, Romania, Slovacchia, Slovenia, Spagna, Svezia, Ungheria, Norvegia, Islanda, Svizzera, Regno Unito",
-Peso disciplina,25,
-Peso tema,5,I pesi sommano a 85: il punteggio viene riportato su 100
-Peso geografia,10,
-Peso valore,15,
-Peso prestigio,15,
-Peso costo,15,
-Soglia avviso,80,Avviso email (web app) sopra questo punteggio
+Tema,fotografia,"L'ambito dei bandi cercati. Cambiandolo (con le fonti) lo stesso motore cerca altro: cinema documentario, illustrazione, editoria…"
+Nome d'arte,Artista di esempio,Solo per i prompt e le bozze; puoi lasciare quello d'esempio
+Anno di nascita,1990,"Serve per i limiti d'età (under 30, under 35…): un bando con limite superato viene escluso"
+Base,Bologna,"Città dove vivi o lavori (anche più d'una, separate da virgole)"
+Città di riferimento,Bologna,Punto di partenza delle distanze sulla mappa
+Base lat,44.4949,Latitudine della città di riferimento (la calcola `elbandito configura`)
+Base lon,11.3426,Longitudine della città di riferimento
+Nazionalità,italiana,Per i bandi riservati a certe nazionalità
+Paese,Italia,Bandi in questo paese: 60% del punteggio geografico
+Regioni di residenza,Emilia-Romagna,"Per i bandi riservati ai residenti di una regione: se non corrisponde, il bando è escluso"
+Luoghi casa,"Emilia-Romagna, Bologna, Modena, Parma, Reggio Emilia, Ferrara, Ravenna, Rimini, Piacenza, Forlì, Cesena",Regione e città che consideri casa: 100% del punteggio geografico
+Etichetta casa,Emilia-Romagna,Come appare nelle motivazioni (es. 'Emilia-Romagna')
+Luoghi vicini,"Toscana, Veneto, Lombardia, Marche, Liguria, Firenze, Venezia, Milano",Regioni o città vicine: 80% del punteggio geografico
+Etichetta vicini,regioni vicine,Come appare nelle motivazioni
+Si candida come,persona,persona | persona e associazione | persona e partita IVA. Con 'persona' i bandi riservati agli enti sono esclusi
+Lingue,"italiano, inglese",Lingue in cui sai scrivere una candidatura: un bando solo in altre lingue è escluso
+Quota massima,50,"Euro. Sopra questa soglia il bando è escluso; sotto, il punteggio 'costo' scende all'aumentare della quota"
+Giorni minimi preparazione,7,I bandi che scadono prima di questi giorni sono esclusi (non c'è tempo per prepararli)
+Disponibilità fuori casa (settimane),4,Promemoria per valutare le residenze lunghe (compare tra i rischi)
+Discipline piene,"fotografia, lens-based, fotografia d'autore, documentario, photography",Bandi esplicitamente su questi linguaggi: punteggio 'disciplina' pieno
+Discipline metà,"arti visive, multidisciplinare, video, cinema, visual arts",Ambiti affini: metà punteggio 'disciplina'
+Temi,"paesaggio, territorio, memoria, acqua, migrazione, archivio, comunità",Temi ricorrenti del tuo lavoro: ogni tema ritrovato nel bando alza il punteggio 'tema'
+Parole chiave,"bando fotografia, open call fotografia, premio fotografia, residenza artistica, photography open call, artist residency, photography grant, photo award",Cosa cercare nei siti WordPress e su SearXNG (italiano e inglese)
+Curriculum,Mostre collettive in Italia; un premio nazionale di fotografia; una residenza in Europa.,"Due righe di dati professionali: entrano nei prompt, nella ricerca e nelle bozze di statement"
+Paesi UE,"Austria, Belgio, Bulgaria, Cipro, Croazia, Danimarca, Estonia, Finlandia, Francia, Germania, Grecia, Irlanda, Lettonia, Lituania, Lussemburgo, Malta, Paesi Bassi, Polonia, Portogallo, Repubblica Ceca, Romania, Slovacchia, Slovenia, Spagna, Svezia, Ungheria, Norvegia, Islanda, Svizzera, Regno Unito",Paesi considerati 'Europa' nel punteggio geografico (40%)
+Peso disciplina,25,Quanto conta che il bando sia sul tuo linguaggio
+Peso tema,5,Quanto conta la vicinanza ai tuoi temi
+Peso geografia,10,Quanto conta la vicinanza a casa
+Peso valore,15,"Quanto contano premio, fee, produzione, viaggio, alloggio, mostra"
+Peso prestigio,15,Quanto contano gli enti noti (scheda ENTI) e i bandi segnalati da più fonti
+Peso costo,15,Quanto conta che sia gratuito. I pesi vengono riportati su 100: conta il rapporto tra loro
+Soglia avviso,80,Web app: email il giorno stesso per i bandi sopra questo punteggio
 Motore estrazione,auto,"auto (Gemini se c'è la chiave, poi Claude API, altrimenti Claude Code) | gemini | claude-api | agente"
 Modello estrazione,gemini-2.5-flash-lite,Piano gratuito
 Modello ripiego,claude-haiku-5-5,Se Gemini non rispetta lo schema
