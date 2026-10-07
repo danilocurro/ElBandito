@@ -112,7 +112,7 @@ Serve se vuoi che ElBandito giri da solo ogni giorno, anche a computer spento.
 1. **Fork privato** di questo repository.
 2. **Foglio Google** vuoto. In [Google Cloud](https://console.cloud.google.com): abilita la Google Sheets API, crea un service account e scarica la chiave JSON. Condividi il foglio con l'email del service account come Editor.
 3. **Secrets del repository** (*Settings → Secrets and variables → Actions*): `ELBANDITO_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON` (il contenuto del JSON), `GEMINI_API_KEY`. Se vuoi la ricerca settimanale via API, anche `ANTHROPIC_API_KEY` e `Motore ricerca = claude-api` nel PROFILO.
-4. *Actions → Su richiesta dalla web app → Run workflow* con comando `prepara`: crea le schede dal seed. Da lì `giornaliero.yml` gira ogni mattina e `settimanale.yml` il lunedì.
+4. *Actions → Su richiesta dalla web app → Run workflow* con comando `prepara`: crea le schede dal seed. Poi aggiungi la *variable* `ELBANDITO_ATTIVO = sì` (stessa pagina dei secrets, scheda Variables): solo da quel momento `giornaliero.yml` gira ogni mattina e `settimanale.yml` il lunedì.
 5. **Web app**: nel foglio, *Estensioni → Apps Script*, copia `apps-script/Codice.gs`, `Index.html` e il manifest `appsscript.json` (oppure usa [clasp](https://github.com/google/clasp)).
    - In *Proprietà script* imposta `GEMINI_API_KEY` (assistente), `GITHUB_REPO` (`utente/ElBandito`) e `GITHUB_TOKEN` (token fine-grained con *Actions: write* solo su questo repository).
    - Esegui una volta `installaTrigger`.
