@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "elbandito": {
+      "command": "uv",
+      "args": ["run", "--quiet", "--directory", "${CLAUDE_PLUGIN_ROOT:-.}", "elbandito", "mcp"],
+      "env": {
+        "ELBANDITO_PLUGIN": "${CLAUDE_PLUGIN_ROOT:-}"
+      }
+    }
+  }
+}

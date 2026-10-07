@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ElBandito</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css">
+<style>
+  :root {
+    --nero: #0b0b0b; --carbone: #161616; --grafite: #222; --linea: #2e2e2e;
+    --testo: #f2f2f2; --tenue: #9a9a9a; --accento: #fff;
+    --verde: #7fd18b; --giallo: #e9c46a; --rosso: #e76f51; --blu: #8ab4f8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--nero); color: var(--testo);
+    font: 15px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  a { color: var(--testo); }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  header { position: sticky; top: 0; z-index: 20; background: var(--nero); border-bottom: 1px solid var(--linea);
+    display: flex; align-items: center; gap: 24px; padding: 14px 24px; flex-wrap: wrap; }
+  .marchio { font-weight: 700; letter-spacing: .18em; text-transform: uppercase; font-size: 13px; }
+  nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav button { background: none; border: 0; padding: 6px 10px; color: var(--tenue); cursor: pointer;
+    letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
+  nav button.attivo, nav button:hover { color: var(--accento); }
+  nav button.attivo { border-bottom: 1px solid var(--accento); }
+  .azioni-testa { margin-left: auto; display: flex; gap: 8px; }
+  main { padding: 24px; max-width: 1280px; margin: 0 auto; }
+  h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--tenue); font-weight: 600; margin: 28px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  .bottone { background: var(--grafite); border: 1px solid var(--linea); padding: 7px 12px; cursor: pointer; border-radius: 2px; }
+  .bottone:hover { border-color: var(--tenue); }
+  .bottone.pieno { background: var(--accento); color: var(--nero); border-color: var(--accento); }
+  .bottone.piccolo { padding: 3px 8px; font-size: 12px; }
+  input[type=text], input[type=search], input[type=date], input[type=number], select, textarea {
+    background: var(--carbone); border: 1px solid var(--linea); padding: 7px 9px; border-radius: 2px; }
+  textarea { width: 100%; min-height: 80px; resize: vertical; }
+
+  .lista { display: grid; gap: 1px; background: var(--linea); border: 1px solid var(--linea); }
+  .voce { background: var(--carbone); display: grid; grid-template-columns: 54px 1fr auto; gap: 14px; padding: 12px 14px; cursor: pointer; align-items: center; }
+  .voce:hover { background: var(--grafite); }
+  .voce.esclusa { opacity: .5; }
+  .punti { font-size: 20px; font-weight: 700; text-align: center; }
+  .punti small { display: block; font-size: 10px; font-weight: 400; color: var(--tenue); letter-spacing: .08em; }
+  .titolo { font-weight: 600; }
+  .sotto { color: var(--tenue); font-size: 13px; }
+  .destra { text-align: right; font-size: 13px; white-space: nowrap; }
+  .etichetta { display: inline-block; font-size: 11px; padding: 1px 6px; border: 1px solid var(--linea); border-radius: 2px; color: var(--tenue); margin-right: 4px; }
+  .etichetta.verde { color: var(--verde); border-color: var(--verde); }
+  .etichetta.giallo { color: var(--giallo); border-color: var(--giallo); }
+  .etichetta.rosso { color: var(--rosso); border-color: var(--rosso); }
+  .vuoto { color: var(--tenue); padding: 14px; background: var(--carbone); border: 1px solid var(--linea); }
+
+  .filtri { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
+  .filtri input[type=search] { flex: 1 1 220px; }
+  .commuta { display: inline-flex; border: 1px solid var(--linea); }
+  .commuta button { background: none; border: 0; padding: 6px 10px; cursor: pointer; color: var(--tenue); }
+  .commuta button.attivo { background: var(--grafite); color: var(--accento); }
+
+  .colonne { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+  .colonna { background: var(--carbone); border: 1px solid var(--linea); min-height: 120px; }
+  .colonna h3 { margin: 0; padding: 10px 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--linea); display: flex; justify-content: space-between; }
+  .carta { padding: 10px 12px; border-bottom: 1px solid var(--linea); cursor: pointer; }
+  .carta:hover { background: var(--grafite); }
+
+  .mese { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--linea); border: 1px solid var(--linea); }
+  .mese .giorno { background: var(--carbone); min-height: 92px; padding: 6px; font-size: 12px; }
+  .mese .giorno.fuori { opacity: .35; }
+  .mese .giorno.oggi { outline: 1px solid var(--accento); outline-offset: -1px; }
+  .mese .intest { background: var(--nero); padding: 6px; font-size: 11px; color: var(--tenue); text-transform: uppercase; letter-spacing: .1em; }
+  .evento { display: block; margin-top: 3px; padding: 2px 4px; background: var(--grafite); border-left: 2px solid var(--accento); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .evento.dubbio { border-left-color: var(--giallo); }
+  .evento.attivita { border-left-color: var(--blu); }
+  #mappa .leaflet-tile-pane { filter: grayscale(1) invert(1) brightness(.85) contrast(.9); }
+  #mappa { height: 560px; border: 1px solid var(--linea); background: var(--carbone); }
+
+  table.dati { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.dati th, table.dati td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  table.dati th { color: var(--tenue); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+
+  .pannello { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100%); background: var(--carbone); border-left: 1px solid var(--linea);
+    transform: translateX(100%); transition: transform .2s ease; z-index: 50; overflow-y: auto; padding: 22px 24px 60px; }
+  .pannello.aperto { transform: none; }
+  .chiudi { position: absolute; top: 14px; right: 16px; background: none; border: 0; font-size: 22px; cursor: pointer; color: var(--tenue); }
+  .pannello h1 { font-size: 21px; margin: 4px 30px 4px 0; line-height: 1.25; }
+  .conto { font-size: 30px; font-weight: 700; }
+  .griglia { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; font-size: 14px; }
+  .griglia dt { color: var(--tenue); }
+  .griglia dd { margin: 0; }
+  .barra { display: grid; grid-template-columns: 90px 1fr 34px; gap: 8px; align-items: center; font-size: 12px; color: var(--tenue); margin: 3px 0; }
+  .barra span.fondo { height: 4px; background: var(--grafite); position: relative; }
+  .barra span.fondo i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accento); }
+  .citazione { border-left: 2px solid var(--linea); padding: 4px 10px; color: var(--tenue); font-style: italic; font-size: 13px; margin: 8px 0; }
+  .avviso { padding: 8px 10px; border: 1px solid var(--giallo); color: var(--giallo); font-size: 13px; margin: 10px 0; }
+  .avviso.rosso { border-color: var(--rosso); color: var(--rosso); }
+  .checklist label { display: flex; gap: 8px; padding: 4px 0; cursor: pointer; }
+  .riga-azioni { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .velo { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; display: none; }
+  .velo.aperto { display: block; }
+  .messaggio { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--accento); color: var(--nero); padding: 8px 14px; z-index: 90; display: none; font-size: 14px; }
+  .bozza { white-space: pre-wrap; background: var(--nero); border: 1px solid var(--linea); padding: 12px; font-size: 14px; }
+  .caricamento { color: var(--tenue); padding: 40px; text-align: center; }
+
+  @media (max-width: 720px) {
+    header { padding: 12px 16px; gap: 10px; }
+    main { padding: 16px; }
+    .voce { grid-template-columns: 44px 1fr; }
+    .voce .destra { grid-column: 2; text-align: left; }
+    .griglia { grid-template-columns: 1fr; }
+    .mese .giorno { min-height: 60px; }
+    #mappa { height: 420px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="marchio">ElBandito</div>
+  <nav id="nav">
+    <button data-vista="oggi" class="attivo">Oggi</button>
+    <button data-vista="esplora">Esplora</button>
+    <button data-vista="pipeline">Pipeline</button>
+    <button data-vista="calendario">Calendario</button>
+    <button data-vista="enti">Enti</button>
+    <button data-vista="fonti">Fonti</button>
+    <button data-vista="profilo">Profilo</button>
+  </nav>
+  <div class="azioni-testa">
+    <button class="bottone piccolo" onclick="apriAggiungiLink()">+ da link</button>
+    <button class="bottone piccolo" onclick="apriAssistente()">Assistente</button>
+  </div>
+</header>
+<main id="vista"><div class="caricamento">Carico i bandi…</div></main>
+<div class="velo" id="velo" onclick="chiudiPannello()"></div>
+<aside class="pannello" id="pannello"><button class="chiudi" onclick="chiudiPannello()" aria-label="Chiudi">×</button><div id="contenuto-pannello"></div></aside>
+<div class="messaggio" id="messaggio"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script>
+/* ------------------------------------------------------------------ stato */
+var D = null;               // dati da getBandi()
+var vista = 'oggi';
+var filtri = { q: '', tipo: '', disciplina: '', paese: '', entro: '', quota: '', valore: '', minimo: '', esclusi: false, modo: 'lista' };
+var meseCal = null;
+var mappa = null;
+var STATI_APERTI = ['Nuovo', 'Da preparare', 'Pronto'];
+
+/* ------------------------------------------------------------------ server */
+/** chiama('nomeFunzione', arg1, arg2…) → Promise, come nel gestionale. */
+/* Tre backend, stessa interfaccia: Apps Script (google.script.run), dashboard locale
+   (POST /api/<nome>, comando "elbandito dashboard") e dati d'esempio (?demo o file aperto da disco). */
+var MODO = (typeof google !== 'undefined' && google.script) ? 'appsscript'
+         : (location.protocol === 'file:' || /[?&]demo\b/.test(location.search)) ? 'demo' : 'locale';
+function chiama(nome) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (ok, ko) {
+    var errore = function (e) { avvisa('Errore: ' + (e.message || e)); ko(e); };
+    if (MODO === 'appsscript') { google.script.run.withSuccessHandler(ok).withFailureHandler(errore)[nome].apply(null, args); return; }
+    if (MODO === 'demo') { ok(DEMO.risposta(nome, args)); return; }
+    fetch('api/' + nome, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(args) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if ('ok' in j) ok(j.ok); else errore(new Error(j.errore || 'risposta non valida')); })
+      .catch(function () { MODO = 'demo'; avvisa('Server locale non raggiungibile: mostro i dati d\'esempio'); ok(DEMO.risposta(nome, args)); });
+  });
+}
+
+function carica(json) {
+  D = typeof json === 'string' ? JSON.parse(json) : json;
+  D.indice = {};
+  D.bandi.forEach(function (b) { D.indice[b.ID] = b; });
+  disegna();
+  var aperto = document.getElementById('pannello').dataset.id;
+  if (aperto && D.indice[aperto]) apriBando(aperto);
+}
+
+/* ------------------------------------------------------------------ utilità */
+function esc(s) { return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function giorniA(iso) { if (!iso) return null; return Math.round((new Date(iso + 'T12:00:00') - new Date(D.oggi + 'T12:00:00')) / 864e5); }
+function piuGiorni(iso, n) { var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+function dataBreve(iso) { if (!iso) return '—'; var p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0].slice(2); }
+function avvisa(t) { var m = document.getElementById('messaggio'); m.textContent = t; m.style.display = 'block'; clearTimeout(avvisa.t); avvisa.t = setTimeout(function () { m.style.display = 'none'; }, 3500); }
+function num(v) { var n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; }
+function aperto(b) { return STATI_APERTI.indexOf(b.Stato) >= 0; }
+
+function etichettaScadenza(b) {
+  var g = giorniA(b.Scadenza);
+  if (g === null) return '<span class="etichetta">senza scadenza</span>';
+  var cls = g <= 7 ? 'rosso' : g <= 21 ? 'giallo' : '';
+  var dubbio = b['Scadenza confermata'] === 'sicura' ? '' : ' <span class="etichetta giallo" title="Data estratta dall\'AI: conferma sul sito">da verificare</span>';
+  return '<span class="etichetta ' + cls + '">' + (g === 0 ? 'oggi' : g + ' gg') + '</span> ' + dataBreve(b.Scadenza) + dubbio;
+}
+
+function voce(b) {
+  var luogo = [b['Città'], b.Paese].filter(Boolean).join(', ');
+  var quota = b['Quota iscrizione'] === '' ? '' : (num(b['Quota iscrizione']) === 0 ? 'gratis' : b['Quota iscrizione'] + ' €');
+  return '<div class="voce' + (b.Esclusione ? ' esclusa' : '') + '" onclick="apriBando(\'' + b.ID + '\')">' +
+    '<div class="punti">' + esc(b.Punteggio || '–') + '<small>punti</small></div>' +
+    '<div><div class="titolo">' + esc(b.Titolo) + '</div>' +
+    '<div class="sotto">' + esc([b.Ente, b.Tipo, luogo, quota].filter(Boolean).join(' · ')) + '</div>' +
+    (b.Esclusione ? '<div class="sotto" style="color:var(--rosso)">Escluso: ' + esc(b.Esclusione) + '</div>'
+                  : (b.Motivazione ? '<div class="sotto">' + esc(b.Motivazione) + '</div>' : '')) + '</div>' +
+    '<div class="destra">' + etichettaScadenza(b) + '<div class="sotto">' + esc(b.Stato) + '</div></div></div>';
+}
+
+function elenco(bandi, vuoto) {
+  return bandi.length ? '<div class="lista">' + bandi.map(voce).join('') + '</div>' : '<div class="vuoto">' + (vuoto || 'Niente da mostrare.') + '</div>';
+}
+
+function perPunteggio(a, b) { return (num(b.Punteggio) || 0) - (num(a.Punteggio) || 0); }
+function perScadenza(a, b) { return String(a.Scadenza || '9999').localeCompare(String(b.Scadenza || '9999')); }
+
+/* ------------------------------------------------------------------ viste */
+function disegna() {
+  document.querySelectorAll('#nav button').forEach(function (b) { b.classList.toggle('attivo', b.dataset.vista === vista); });
+  var el = document.getElementById('vista');
+  if (mappa) { mappa.remove(); mappa = null; }
+  el.innerHTML = ({ oggi: vistaOggi, esplora: vistaEsplora, pipeline: vistaPipeline, calendario: vistaCalendario,
+                    enti: vistaEnti, fonti: vistaFonti, profilo: vistaProfilo })[vista]();
+  if (vista === 'esplora' && filtri.modo === 'mappa') disegnaMappa(filtrati());
+}
+
+function vistaOggi() {
+  var settimana = piuGiorni(D.oggi, -7);
+  var nuovi = D.bandi.filter(function (b) { return b.Stato === 'Nuovo' && !b.Esclusione && b['Trovato il'] >= settimana; }).sort(perPunteggio);
+  var vicini = D.bandi.filter(function (b) { var g = giorniA(b.Scadenza); return aperto(b) && !b.Esclusione && g !== null && g >= 0 && g <= 14; }).sort(perScadenza);
+  var azioni = D.bandi.filter(function (b) { return b['Data prossima azione'] && b['Data prossima azione'] <= D.oggi && aperto(b) && b.Stato !== 'Nuovo'; }).sort(perScadenza);
+  var mancanti = D.bandi.filter(function (b) {
+    var c = D.candidature[b.ID];
+    return (b.Stato === 'Da preparare' || b.Stato === 'Pronto') && c && c.Checklist.some(function (v) { return !v.fatto; });
+  });
+  return '<h2>Nuovi della settimana · ' + nuovi.length + '</h2>' + elenco(nuovi.slice(0, 15), 'Nessun bando nuovo negli ultimi 7 giorni.') +
+    '<h2>Scadenze nei prossimi 14 giorni</h2>' + elenco(vicini, 'Nessuna scadenza vicina.') +
+    '<h2>Prossime azioni</h2>' + elenco(azioni, 'Niente in ritardo.') +
+    '<h2>Candidature con materiali mancanti</h2>' + elenco(mancanti, 'Tutte le checklist sono complete.');
+}
+
+function filtrati() {
+  var q = filtri.q.toLowerCase();
+  return D.bandi.filter(function (b) {
+    if (!filtri.esclusi && b.Esclusione) return false;
+    if (['Scartato', 'Vinto', 'Non selezionato'].indexOf(b.Stato) >= 0 && !filtri.esclusi) return false;
+    if (q && JSON.stringify([b.Titolo, b.Ente, b.Temi, b['Città'], b.Paese, b.Valore, b.Motivazione]).toLowerCase().indexOf(q) < 0) return false;
+    if (filtri.tipo && b.Tipo !== filtri.tipo) return false;
+    if (filtri.disciplina && String(b.Disciplina).toLowerCase().indexOf(filtri.disciplina) < 0) return false;
+    if (filtri.paese && b.Paese !== filtri.paese) return false;
+    if (filtri.entro) { var g = giorniA(b.Scadenza); if (g === null || g > Number(filtri.entro)) return false; }
+    if (filtri.quota !== '') { var qq = num(b['Quota iscrizione']); if (qq === null || qq > Number(filtri.quota)) return false; }
+    if (filtri.minimo && (num(b.Punteggio) || 0) < Number(filtri.minimo)) return false;
+    if (filtri.valore && !/\d/.test(b.Valore || '')) return false;
+    return true;
+  }).sort(perPunteggio);
+}
+
+function opzioni(valori, scelto, vuota) {
+  return '<option value="">' + vuota + '</option>' + valori.map(function (v) { return '<option' + (v === scelto ? ' selected' : '') + '>' + esc(v) + '</option>'; }).join('');
+}
+function unici(campo) { var s = {}; D.bandi.forEach(function (b) { if (b[campo]) s[b[campo]] = 1; }); return Object.keys(s).sort(); }
+
+function vistaEsplora() {
+  var f = filtri;
+  var html = '<div class="filtri">' +
+    '<input type="search" placeholder="Cerca titolo, ente, tema, luogo…" value="' + esc(f.q) + '" oninput="filtri.q=this.value;aggiornaRisultati()">' +
+    '<select onchange="filtri.tipo=this.value;aggiornaRisultati()">' + opzioni(unici('Tipo'), f.tipo, 'Tutti i tipi') + '</select>' +
+    '<select onchange="filtri.disciplina=this.value;aggiornaRisultati()">' + opzioni(['fotografia', 'lens-based', 'arti visive', 'video', 'cinema', 'multidisciplinare'], f.disciplina, 'Ogni disciplina') + '</select>' +
+    '<select onchange="filtri.paese=this.value;aggiornaRisultati()">' + opzioni(unici('Paese'), f.paese, 'Ogni paese') + '</select>' +
+    '<select onchange="filtri.entro=this.value;aggiornaRisultati()"><option value="">Qualsiasi scadenza</option>' +
+      ['30', '60', '90'].map(function (v) { return '<option value="' + v + '"' + (f.entro === v ? ' selected' : '') + '>entro ' + v + ' giorni</option>'; }).join('') + '</select>' +
+    '<select onchange="filtri.quota=this.value;aggiornaRisultati()"><option value="">Qualsiasi quota</option>' +
+      [['0', 'gratis'], ['20', '≤ 20 €'], ['50', '≤ 50 €']].map(function (v) { return '<option value="' + v[0] + '"' + (f.quota === v[0] ? ' selected' : '') + '>' + v[1] + '</option>'; }).join('') + '</select>' +
+    '<input type="number" min="0" max="100" step="5" placeholder="punti min." style="width:110px" value="' + esc(f.minimo) + '" oninput="filtri.minimo=this.value;aggiornaRisultati()">' +
+    '<label class="sotto"><input type="checkbox"' + (f.valore ? ' checked' : '') + ' onchange="filtri.valore=this.checked;aggiornaRisultati()"> con premio</label>' +
+    '<label class="sotto"><input type="checkbox"' + (f.esclusi ? ' checked' : '') + ' onchange="filtri.esclusi=this.checked;aggiornaRisultati()"> mostra esclusi</label>' +
+    '<span class="commuta">' + ['lista', 'mappa', 'calendario'].map(function (m) {
+      return '<button class="' + (f.modo === m ? 'attivo' : '') + '" onclick="filtri.modo=\'' + m + '\';disegna()">' + m[0].toUpperCase() + m.slice(1) + '</button>';
+    }).join('') + '</span></div><div id="risultati"></div>';
+  setTimeout(aggiornaRisultati, 0);
+  return html;
+}
+
+function aggiornaRisultati() {
+  var r = filtrati();
+  var el = document.getElementById('risultati');
+  if (!el) return;
+  if (filtri.modo === 'lista') el.innerHTML = '<div class="sotto" style="margin-bottom:8px">' + r.length + ' bandi</div>' + elenco(r, 'Nessun bando con questi filtri.');
+  else if (filtri.modo === 'calendario') el.innerHTML = calendario(r);
+  else { if (!mappa) { el.innerHTML = '<div id="mappa"></div>'; } disegnaMappa(r); }
+}
+
+function distanzaKm(lat1, lon1, lat2, lon2) {
+  var R = 6371, r = Math.PI / 180, dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+function disegnaMappa(bandi) {
+  var el = document.getElementById('mappa');
+  if (!el || typeof L === 'undefined') return;
+  var base = [num(D.profilo['Base lat']) || 44.4949, num(D.profilo['Base lon']) || 11.3426];
+  if (!mappa) {
+    mappa = L.map('mappa').setView([45, 12], 4);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 18 }).addTo(mappa);
+    L.circleMarker(base, { radius: 7, color: '#fff', fillColor: '#fff', fillOpacity: 1 }).addTo(mappa).bindPopup(esc(D.profilo['Città di riferimento'] || 'Base'));
+  }
+  if (mappa._gruppo) mappa.removeLayer(mappa._gruppo);
+  var gruppo = L.markerClusterGroup();
+  bandi.forEach(function (b) {
+    var lat = num(b.Lat), lon = num(b.Lon);
+    if (lat === null || lon === null) return;
+    var m = L.circleMarker([lat, lon], { radius: 6, color: '#fff', weight: 1, fillColor: b.Esclusione ? '#555' : '#e9c46a', fillOpacity: .9 });
+    m.bindPopup('<b>' + esc(b.Titolo) + '</b><br>' + esc(b.Ente || '') + '<br>' + esc(b['Città'] || '') + ' · ' +
+      distanzaKm(base[0], base[1], lat, lon) + ' km da ' + esc(D.profilo['Città di riferimento'] || 'casa') + '<br>Scadenza ' + dataBreve(b.Scadenza) +
+      '<br><a href="#" onclick="apriBando(\'' + b.ID + '\');return false">Apri la scheda</a>');
+    gruppo.addLayer(m);
+  });
+  mappa.addLayer(gruppo);
+  mappa._gruppo = gruppo;
+  setTimeout(function () { mappa.invalidateSize(); }, 50);
+}
+
+function vistaPipeline() {
+  var stati = ['Nuovo', 'Da preparare', 'Pronto', 'Inviato', 'In attesa edizione', 'Vinto', 'Non selezionato', 'Scartato'];
+  return '<div class="colonne">' + stati.map(function (s) {
+    var qui = D.bandi.filter(function (b) { return b.Stato === s && (s !== 'Nuovo' || !b.Esclusione); })
+      .sort(s === 'Nuovo' ? perPunteggio : perScadenza);
+    return '<div class="colonna"><h3>' + s + '<span>' + qui.length + '</span></h3>' + qui.slice(0, 60).map(function (b) {
+      return '<div class="carta" onclick="apriBando(\'' + b.ID + '\')"><div class="titolo" style="font-size:14px">' + esc(b.Titolo) + '</div>' +
+        '<div class="sotto">' + esc(b.Punteggio || '–') + ' punti · ' + etichettaScadenza(b) + '</div>' +
+        (b['Prossima azione'] ? '<div class="sotto">→ ' + esc(b['Prossima azione']) + ' ' + dataBreve(b['Data prossima azione']) + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+  }).join('') + '</div>';
+}
+
+function vistaCalendario() {
+  var attivi = D.bandi.filter(function (b) { return (aperto(b) || b.Stato === 'Inviato') && !b.Esclusione; });
+  return '<div class="filtri"><button class="bottone" onclick="spostaMese(-1)">‹</button><button class="bottone" onclick="spostaMese(1)">›</button>' +
+    '<button class="bottone" onclick="scaricaICS()">Esporta .ics per Google Calendar</button>' +
+    '<span class="sotto">Bordo bianco: scadenza sicura · giallo: da verificare · blu: prossima azione</span></div>' + calendario(attivi);
+}
+
+function spostaMese(n) { var d = new Date((meseCal || D.oggi.slice(0, 7)) + '-15'); d.setMonth(d.getMonth() + n); meseCal = d.toISOString().slice(0, 7); disegna(); }
+
+function calendario(bandi) {
+  var mese = meseCal || D.oggi.slice(0, 7);
+  var primo = new Date(mese + '-01T12:00:00');
+  var nomeMese = primo.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  var inizio = new Date(primo); inizio.setDate(1 - ((primo.getDay() + 6) % 7));
+  var eventi = {};
+  bandi.forEach(function (b) {
+    if (b.Scadenza) (eventi[b.Scadenza] = eventi[b.Scadenza] || []).push({ b: b, cls: b['Scadenza confermata'] === 'sicura' ? '' : 'dubbio', t: b.Titolo });
+    if (b['Data prossima azione'] && b.Stato !== 'Nuovo') (eventi[b['Data prossima azione']] = eventi[b['Data prossima azione']] || []).push({ b: b, cls: 'attivita', t: '→ ' + b['Prossima azione'] + ': ' + b.Titolo });
+  });
+  var html = '<h2>' + nomeMese + '</h2><div class="mese">' + ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'].map(function (g) { return '<div class="intest">' + g + '</div>'; }).join('');
+  for (var i = 0; i < 42; i++) {
+    var d = new Date(inizio); d.setDate(inizio.getDate() + i);
+    var iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    html += '<div class="giorno' + (iso.slice(0, 7) !== mese ? ' fuori' : '') + (iso === D.oggi ? ' oggi' : '') + '"><div>' + d.getDate() + '</div>' +
+      (eventi[iso] || []).map(function (e) { return '<span class="evento ' + e.cls + '" title="' + esc(e.t) + '" onclick="apriBando(\'' + e.b.ID + '\')">' + esc(e.t) + '</span>'; }).join('') + '</div>';
+  }
+  return html + '</div>';
+}
+
+function scaricaICS() {
+  chiama('esportaICS').then(function (testo) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([testo], { type: 'text/calendar' }));
+    a.download = 'ElBandito.ics'; a.click();
+    avvisa('File .ics pronto: importalo in Google Calendar');
+  });
+}
+
+function vistaEnti() {
+  var righe = D.enti.slice().sort(function (a, b) { return String(a.Livello).localeCompare(String(b.Livello)) || a.Nome.localeCompare(b.Nome); }).map(function (e) {
+    var chiave = e.Nome.toLowerCase().split(/[–(]/)[0].trim();
+    var suoi = D.bandi.filter(function (b) { return String(b.Ente).toLowerCase().indexOf(chiave) >= 0 || chiave.indexOf(String(b.Ente).toLowerCase()) >= 0 && b.Ente; });
+    return '<tr><td><b>' + esc(e.Nome) + '</b><div class="sotto">' + esc([e.Tipo, e['Città'], e.Paese].filter(Boolean).join(' · ')) + '</div></td>' +
+      '<td>' + '★★★'.slice(0, 4 - (Number(e.Livello) || 3)) + '</td>' +
+      '<td>' + esc(e['Mesi call'] || '') + '</td><td>' + esc(e['Storico'] || '') + '</td>' +
+      '<td>' + (suoi.map(function (b) { return '<a href="#" onclick="apriBando(\'' + b.ID + '\');return false">' + esc(b.Titolo) + '</a> <span class="sotto">' + esc(b.Stato) + '</span>'; }).join('<br>') || '<span class="sotto">—</span>') + '</td>' +
+      '<td>' + (e.Sito ? '<a href="' + esc(e.Sito) + '" target="_blank" rel="noopener">sito</a>' : '') + '</td></tr>';
+  }).join('');
+  return '<h2>Enti, festival e fondazioni · ' + D.enti.length + '</h2><p class="sotto">I nomi noti alzano il punteggio "prestigio". Si aggiungono nella scheda ENTI del foglio.</p>' +
+    '<div style="overflow-x:auto"><table class="dati"><tr><th>Ente</th><th>Livello</th><th>Mesi call</th><th>Storico</th><th>Bandi trovati</th><th></th></tr>' + righe + '</table></div>';
+}
+
+function vistaFonti() {
+  var righe = D.fonti.map(function (f) {
+    var attiva = /^(sì|si|x|true|1)$/i.test(String(f.Attiva));
+    var errori = Number(f['Errori consecutivi']) || 0;
+    return '<tr><td><b>' + esc(f.Nome) + '</b><div class="sotto">' + esc(f.Connettore) + ' · ' + esc(f.Frequenza) + ' · ' + esc(f.Livello) + '</div></td>' +
+      '<td>' + esc(f['Ultima lettura'] || '—') + '</td>' +
+      '<td>' + (errori ? '<span class="etichetta rosso">' + errori + ' errori</span> ' : '') + '<span class="sotto">' + esc(f['Ultimo esito'] || '') + '</span></td>' +
+      '<td>' + esc(f['Bandi portati'] || 0) + '</td>' +
+      '<td><button class="bottone piccolo" onclick="commutaFonte(\'' + f.ID + '\',' + !attiva + ')">' + (attiva ? 'attiva' : 'in pausa') + '</button></td></tr>';
+  }).join('');
+  var log = D.log.map(function (l) {
+    return '<tr><td>' + esc(l.Data) + '</td><td>' + esc(l['Tipo giro']) + '</td><td>' + esc(l['Fonti lette']) + '</td><td>' + esc(l['Bandi nuovi']) + '</td><td>' + esc(l['Bandi aggiornati']) + '</td><td class="sotto">' + esc(l['Fonti in errore']) + (l['Domini suggeriti'] ? '<br>Da valutare: ' + esc(l['Domini suggeriti']) : '') + '</td></tr>';
+  }).join('');
+  return '<h2>Aggiungi una fonte</h2><div class="filtri">' +
+    '<input type="text" id="fNome" placeholder="Nome"><input type="text" id="fUrl" placeholder="URL della pagina open call o del feed" style="flex:1 1 280px">' +
+    '<select id="fConn"><option value="watch">watch (pagina che cambia)</option><option value="rss">rss</option><option value="wordpress">wordpress</option><option value="listing">listing (elenco)</option></select>' +
+    '<button class="bottone pieno" onclick="nuovaFonte()">Aggiungi</button></div>' +
+    '<h2>Fonti · ' + D.fonti.length + '</h2><div style="overflow-x:auto"><table class="dati"><tr><th>Fonte</th><th>Ultima lettura</th><th>Esito</th><th>Bandi</th><th></th></tr>' + righe + '</table></div>' +
+    '<h2>Ultimi giri del collettore</h2><div style="overflow-x:auto"><table class="dati"><tr><th>Data</th><th>Giro</th><th>Fonti</th><th>Nuovi</th><th>Aggiornati</th><th>Note</th></tr>' + (log || '<tr><td colspan="6" class="sotto">Ancora nessun giro.</td></tr>') + '</table></div>' +
+    (D.linkGitHub ? '<p class="sotto"><a href="' + esc(D.linkGitHub) + '" target="_blank" rel="noopener">Esecuzioni su GitHub Actions</a></p>' : '');
+}
+
+function commutaFonte(id, attiva) { chiama('aggiornaFonte', id, { Attiva: attiva ? 'sì' : 'no' }).then(carica); }
+function nuovaFonte() {
+  var f = { Nome: document.getElementById('fNome').value.trim(), URL: document.getElementById('fUrl').value.trim(), Connettore: document.getElementById('fConn').value };
+  if (!f.Nome || !/^https?:\/\//.test(f.URL)) { avvisa('Servono un nome e un URL completo'); return; }
+  chiama('aggiungiFonte', f).then(function (j) { carica(j); avvisa('Fonte aggiunta: verrà letta al prossimo giro'); });
+}
+
+function vistaProfilo() {
+  var campi = Object.keys(D.profilo);
+  return '<h2>Profilo e pesi</h2><p class="sotto">Questi valori guidano filtri e punteggio. Dopo una modifica, i punteggi si aggiornano al prossimo giro (o con "Ricalcola ora").</p>' +
+    '<div class="filtri"><button class="bottone" onclick="chiama(\'avviaCollettore\',\'ricalcola\',\'\').then(avvisa)">Ricalcola ora</button></div>' +
+    '<table class="dati">' + campi.map(function (c) {
+      return '<tr><th style="width:240px">' + esc(c) + '</th><td><input type="text" style="width:100%" value="' + esc(D.profilo[c]) + '" onchange="chiama(\'salvaProfilo\',' + JSON.stringify(c).replace(/"/g, '&quot;') + ',this.value).then(function(j){carica(j);avvisa(\'Salvato\')})"></td></tr>';
+    }).join('') + '</table>';
+}
+
+/* ------------------------------------------------------------------ scheda bando */
+function apriBando(id) {
+  var b = D.indice[id]; if (!b) return;
+  var p = document.getElementById('pannello');
+  p.dataset.id = id;
+  var g = giorniA(b.Scadenza);
+  var c = D.candidature[id];
+  var dett = b['Dettaglio punteggio'] || {};
+  var pesi = { disciplina: 'Peso disciplina', tema: 'Peso tema', geografia: 'Peso geografia', valore: 'Peso valore', prestigio: 'Peso prestigio', costo: 'Peso costo' };
+  var barre = Object.keys(pesi).map(function (k) {
+    var max = num(D.profilo[pesi[k]]) || 1, v = num(dett[k]) || 0;
+    return '<div class="barra"><span>' + k + '</span><span class="fondo"><i style="width:' + Math.min(100, v / max * 100) + '%"></i></span><span>' + v + '/' + max + '</span></div>';
+  }).join('');
+  var dati = [['Ente', b.Ente], ['Tipo', b.Tipo], ['Disciplina', b.Disciplina], ['Temi', b.Temi], ['Luogo', [b['Città'], b.Regione, b.Paese].filter(Boolean).join(', ')],
+    ['Date attività', b['Date attività']], ['Apertura', dataBreve(b.Apertura)], ['Quota', b['Quota iscrizione'] === '' ? 'non indicata' : (num(b['Quota iscrizione']) === 0 ? 'gratuita' : b['Quota iscrizione'] + ' €')],
+    ['Valore', b.Valore], ['Eleggibilità', b['Eleggibilità']], ['Lingua', b['Lingua candidatura']], ['Fonti', b.Fonte + (Number(b['N. fonti']) > 1 ? ' (' + b['N. fonti'] + ')' : '')],
+    ['Edizione', b.Edizione], ['Trovato il', dataBreve(b['Trovato il'])]].filter(function (r) { return r[1] && r[1] !== '—'; });
+  var azioni = {
+    'Nuovo': [['interessa', 'Mi interessa', 1], ['scarta', 'Scarta'], ['prossimo_anno', "Torna l'anno prossimo"]],
+    'Da preparare': [['pronto', 'Materiali pronti', 1], ['scarta', 'Rinuncio']],
+    'Pronto': [['inviato', 'Inviato', 1], ['interessa', 'Torna a preparare']],
+    'Inviato': [['vinto', 'Esito: sì', 1], ['non_selezionato', 'Esito: no']],
+    'Vinto': [['prossimo_anno', "Torna l'anno prossimo"], ['archivia', 'Archivia']],
+    'Non selezionato': [['prossimo_anno', "Riprova l'anno prossimo"], ['archivia', 'Archivia']],
+    'Scartato': [['riapri', 'Riapri'], ['archivia', 'Archivia']],
+    'In attesa edizione': [['riapri', 'Riapri'], ['archivia', 'Archivia']]
+  }[b.Stato] || [];
+  var html = '<div class="sotto">' + esc(b.ID) + ' · ' + esc(b.Stato) + (b['Prossima azione'] ? ' · → ' + esc(b['Prossima azione']) + ' ' + dataBreve(b['Data prossima azione']) : '') + '</div>' +
+    '<h1>' + esc(b.Titolo) + '</h1>' +
+    '<div style="display:flex;gap:24px;align-items:flex-end;margin:14px 0">' +
+      '<div><div class="conto">' + esc(b.Punteggio || '–') + '</div><div class="sotto">punti</div></div>' +
+      '<div><div class="conto">' + (g === null ? '—' : g) + '</div><div class="sotto">giorni alla scadenza</div></div></div>' +
+    (b.Esclusione ? '<div class="avviso rosso">Escluso: ' + esc(b.Esclusione) + '</div>' : '') +
+    (b.Motivazione ? '<p>' + esc(b.Motivazione) + '</p>' : '') +
+    (b.Rischi ? '<div class="avviso">Rischi: ' + esc(b.Rischi) + '</div>' : '') + barre +
+    '<h2>Scadenza</h2><div><b>' + (b.Scadenza ? new Date(b.Scadenza + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'non indicata') + '</b>' +
+      (b['Fuso scadenza'] ? ' · ' + esc(b['Fuso scadenza']) : '') + ' ' +
+      (b['Scadenza confermata'] === 'sicura' ? '<span class="etichetta verde">sicura</span>' : '<span class="etichetta giallo">da verificare</span>') + '</div>' +
+    (b.Estratto ? '<div class="citazione">«' + esc(b.Estratto) + '»</div>' : '') +
+    '<div class="riga-azioni"><a class="bottone" href="' + esc(b['Link bando']) + '" target="_blank" rel="noopener">Verifica sul sito ↗</a>' +
+      (b['Link candidatura'] ? '<a class="bottone" href="' + esc(b['Link candidatura']) + '" target="_blank" rel="noopener">Modulo di candidatura ↗</a>' : '') +
+      (b['Scadenza confermata'] !== 'sicura' ? '<input type="date" id="dataConferma" value="' + esc(b.Scadenza) + '"><button class="bottone" onclick="chiama(\'confermaScadenza\',\'' + id + '\',document.getElementById(\'dataConferma\').value).then(function(j){carica(j);avvisa(\'Scadenza confermata\')})">Confermo la data</button>' : '') + '</div>' +
+    '<h2>Azioni</h2><div class="riga-azioni">' + azioni.map(function (a) {
+      return '<button class="bottone' + (a[2] ? ' pieno' : '') + '" onclick="azione(\'' + id + '\',\'' + a[0] + '\')">' + a[1] + '</button>';
+    }).join('') + '</div>' +
+    (c ? '<h2>Checklist materiali</h2><div class="checklist">' + c.Checklist.map(function (v, i) {
+      return '<label><input type="checkbox"' + (v.fatto ? ' checked' : '') + ' onchange="spunta(\'' + id + '\',' + i + ',this.checked)"> ' + esc(v.voce) + '</label>';
+    }).join('') + '</div><div class="filtri" style="margin-top:8px"><input type="text" id="nuovaVoce" placeholder="Aggiungi voce"><button class="bottone piccolo" onclick="aggiungiVoce(\'' + id + '\')">+</button>' +
+      '<input type="text" id="cartella" placeholder="Link cartella Drive dei materiali" value="' + esc(c.Cartella || '') + '" style="flex:1" onchange="chiama(\'salvaChecklist\',\'' + id + '\',D.candidature[\'' + id + '\'].Checklist,this.value).then(carica)">' +
+      (c.Cartella ? '<a class="bottone piccolo" href="' + esc(c.Cartella) + '" target="_blank" rel="noopener">apri</a>' : '') + '</div>' : '') +
+    (c && (b.Stato === 'Non selezionato' || b.Stato === 'Vinto') ? '<h2>Feedback ricevuto</h2><textarea onchange="chiama(\'salvaFeedback\',\'' + id + '\',this.value).then(carica)">' + esc(c.Feedback || '') + '</textarea>' : '') +
+    '<h2>Dati del bando</h2><dl class="griglia">' + dati.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>' +
+    (b['Materiali richiesti'] ? '<h2>Materiali richiesti</h2><p>' + esc(b['Materiali richiesti']) + '</p>' : '') +
+    '<h2>Assistente</h2><div class="riga-azioni"><button class="bottone" onclick="bozzaStatement(\'' + id + '\')">Bozza di statement</button>' +
+      '<button class="bottone" onclick="chiama(\'cercaAFondo\',\'' + id + '\').then(avvisa)">Cerca a fondo</button></div>' +
+    '<div id="bozza"></div>' +
+    (b.Approfondimento ? '<h2>Approfondimento</h2><div class="bozza">' + esc(b.Approfondimento) + '</div>' : '') +
+    '<h2>Note</h2><textarea onchange="chiama(\'salvaNote\',\'' + id + '\',this.value).then(function(j){carica(j);avvisa(\'Nota salvata\')})">' + esc(b.Note || '') + '</textarea>' +
+    (b.Storico ? '<h2>Storico</h2><div class="sotto" style="white-space:pre-line">' + esc(b.Storico) + '</div>' : '');
+  document.getElementById('contenuto-pannello').innerHTML = html;
+  p.classList.add('aperto');
+  document.getElementById('velo').classList.add('aperto');
+}
+
+function chiudiPannello() {
+  var p = document.getElementById('pannello');
+  p.classList.remove('aperto'); delete p.dataset.id;
+  document.getElementById('velo').classList.remove('aperto');
+}
+
+function azione(id, nome) {
+  var extra = {};
+  if (nome === 'inviato') { var d = prompt("Data dell'esito, se nota (aaaa-mm-gg). Lascia vuoto se non si sa:", ''); if (d === null) return; extra.dataEsito = d; }
+  chiama('registraAzione', id, nome, extra).then(function (j) { carica(j); avvisa('Fatto'); });
+}
+
+function spunta(id, i, fatto) {
+  var lista = D.candidature[id].Checklist; lista[i].fatto = fatto;
+  chiama('salvaChecklist', id, lista).then(carica);
+}
+function aggiungiVoce(id) {
+  var v = document.getElementById('nuovaVoce').value.trim(); if (!v) return;
+  var lista = D.candidature[id].Checklist.concat([{ voce: v, fatto: false }]);
+  chiama('salvaChecklist', id, lista).then(carica);
+}
+
+function bozzaStatement(id) {
+  var el = document.getElementById('bozza');
+  var indicazioni = prompt('Indicazioni per la bozza (progetto da proporre, tono…). Facoltativo:', '');
+  if (indicazioni === null) return;
+  el.innerHTML = '<p class="sotto">Scrivo la bozza…</p>';
+  chiama('assistente', 'statement', indicazioni, id).then(function (j) {
+    var r = JSON.parse(j);
+    el.innerHTML = '<div class="bozza" id="testoBozza">' + esc(r.risposta) + '</div><div class="riga-azioni"><button class="bottone" onclick="navigator.clipboard.writeText(document.getElementById(\'testoBozza\').innerText);avvisa(\'Copiata\')">Copia</button><span class="sotto">Bozza da rivedere: non viene inviata a nessuno.</span></div>';
+  });
+}
+
+/* ------------------------------------------------------------------ da link e assistente */
+function apriAggiungiLink() {
+  var url = prompt('Incolla il link di un bando, un post o una pagina:');
+  if (!url) return;
+  chiama('aggiungiDaLink', url.trim()).then(avvisa);
+}
+
+function apriAssistente() {
+  var p = document.getElementById('pannello');
+  delete p.dataset.id;
+  document.getElementById('contenuto-pannello').innerHTML = '<h1>Assistente</h1><p class="sotto">Domande sui bandi del foglio. Le azioni proposte si applicano solo con ✓ Applica.</p>' +
+    '<textarea id="domanda" placeholder="Es. residenze estive in Sud Europa con alloggio pagato e senza quota?"></textarea>' +
+    '<div class="riga-azioni"><button class="bottone pieno" onclick="chiedi()">Chiedi</button></div><div id="risposta"></div>';
+  p.classList.add('aperto'); document.getElementById('velo').classList.add('aperto');
+  setTimeout(function () { document.getElementById('domanda').focus(); }, 50);
+}
+
+function chiedi() {
+  var q = document.getElementById('domanda').value.trim(); if (!q) return;
+  var el = document.getElementById('risposta'); el.innerHTML = '<p class="sotto">Penso…</p>';
+  chiama('assistente', 'domanda', q).then(function (j) {
+    var r = JSON.parse(j);
+    var testo = esc(r.risposta).replace(/\b(B\d{4})\b/g, function (id) { return D.indice[id] ? '<a href="#" onclick="apriBando(\'' + id + '\');return false">' + id + '</a>' : id; });
+    el.innerHTML = '<div class="bozza">' + testo + '</div>' + (r.azioni || []).map(function (a, i) {
+      var b = D.indice[a.id]; if (!b) return '';
+      return '<div class="avviso" style="display:flex;gap:10px;align-items:center;justify-content:space-between"><span>' + esc(a.azione) + ' → ' + esc(b.Titolo) + '<br><span class="sotto">' + esc(a.perche || '') + '</span></span>' +
+        '<button class="bottone piccolo" onclick="this.disabled=true;chiama(\'registraAzione\',\'' + a.id + '\',\'' + a.azione + '\',{nota:\'assistente\'}).then(function(j){carica(j);avvisa(\'Applicato\')})">✓ Applica</button></div>';
+    }).join('');
+  });
+}
+
+/* ------------------------------------------------------------------ avvio */
+document.getElementById('nav').addEventListener('click', function (e) {
+  if (e.target.dataset.vista) { vista = e.target.dataset.vista; chiudiPannello(); disegna(); }
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') chiudiPannello(); });
+
+/* Fuori da Apps Script (anteprima locale) si usano dati d'esempio. */
+var DEMO = {
+  risposta: function (nome) {
+    if (nome === 'getBandi') return DEMO.dati();
+    if (nome === 'esportaICS') return 'BEGIN:VCALENDAR\r\nEND:VCALENDAR';
+    if (nome === 'assistente') return JSON.stringify({ risposta: 'Anteprima locale: l\'assistente risponde solo nella web app.', azioni: [] });
+    avvisa('Anteprima locale: "' + nome + '" funziona solo nella web app');
+    return DEMO.dati();
+  },
+  dati: function () {
+    var oggi = new Date().toISOString().slice(0, 10);
+    var g = function (n) { return piuGiorni(oggi, n); };
+    return JSON.stringify({
+      oggi: oggi, stati: [], linkGitHub: '', log: [{ Data: oggi, 'Tipo giro': 'giornaliero', 'Fonti lette': 24, 'Bandi nuovi': 3, 'Bandi aggiornati': 5, 'Fonti in errore': '' }],
+      profilo: { 'Città di riferimento': 'Bologna', 'Base lat': '44.4949', 'Base lon': '11.3426', 'Peso disciplina': '25', 'Peso tema': '5', 'Peso geografia': '10', 'Peso valore': '15', 'Peso prestigio': '15', 'Peso costo': '15', 'Quota massima': '50', 'Lingue': 'italiano, inglese' },
+      fonti: [{ ID: 'F02', Nome: 'Exibart – Bandi e concorsi', Connettore: 'rss', Frequenza: 'giornaliera', Livello: 'Italia', Attiva: 'sì', 'Ultima lettura': oggi, 'Ultimo esito': 'ok · 12 pagine, 2 nuovi', 'Bandi portati': 14, 'Errori consecutivi': 0 },
+              { ID: 'F31', Nome: 'LensCulture', Connettore: 'browser', Frequenza: 'settimanale', Livello: 'Mondo', Attiva: 'no', 'Ultimo esito': 'accesso negato', 'Errori consecutivi': 3 }],
+      enti: [{ Nome: 'Cortona On The Move', Tipo: 'festival', Livello: '1', 'Città': 'Cortona', Paese: 'Italia', 'Storico': '' }],
+      candidature: { B0002: { 'ID bando': 'B0002', Checklist: [{ voce: 'portfolio 20 immagini', fatto: true }, { voce: 'statement', fatto: false }, { voce: 'CV', fatto: false }] } },
+      bandi: [
+        { ID: 'B0001', Titolo: 'Premio Portici per la fotografia (esempio)', Ente: 'Fondazione Portici', Tipo: 'premio', Disciplina: 'fotografia', Temi: 'territorio, memoria', 'Città': 'Bologna', Regione: 'Emilia-Romagna', Paese: 'Italia', Lat: 44.49, Lon: 11.34, Scadenza: g(40), 'Scadenza confermata': 'sicura', 'Quota iscrizione': 0, Valore: '3.000 € + residenza + mostra', Punteggio: 86, 'Dettaglio punteggio': { disciplina: 25, tema: 5, geografia: 10, valore: 14.4, prestigio: 3, costo: 15 }, Motivazione: 'Fotografia esplicita · tema territorio e memoria · Emilia-Romagna · gratuito', Rischi: '', Esclusione: '', Stato: 'Nuovo', 'Trovato il': oggi, Estratto: 'Le candidature vanno inviate entro il …', 'Link bando': '#', Fonte: 'F02', 'Materiali richiesti': 'portfolio 15 immagini; statement; CV' },
+        { ID: 'B0002', Titolo: 'Residenza Isole Minori (esempio)', Ente: 'Associazione Arcipelago', Tipo: 'residenza', Disciplina: 'arti visive', 'Città': 'Lipari', Paese: 'Italia', Lat: 38.47, Lon: 14.95, Scadenza: g(9), 'Scadenza confermata': 'da verificare', 'Quota iscrizione': '', Valore: 'alloggio e vitto', Punteggio: 64, Motivazione: 'Alloggio coperto', Rischi: 'Quota non indicata', Stato: 'Da preparare', 'Prossima azione': 'Preparare i materiali', 'Data prossima azione': oggi, 'Trovato il': g(-10), 'Link bando': '#', Fonte: 'F09' },
+        { ID: 'B0003', Titolo: 'Nordic Documentary Photo Grant (esempio)', Ente: 'North Light Foundation', Tipo: 'grant', Disciplina: 'fotografia', 'Città': 'Oslo', Paese: 'Norvegia', Lat: 59.91, Lon: 10.75, Scadenza: g(75), 'Scadenza confermata': 'sicura', 'Quota iscrizione': 0, Valore: '5.000 €', Punteggio: 71, Motivazione: 'Fotografia esplicita · valore 5.000 € · gratuito', Stato: 'Nuovo', 'Trovato il': g(-2), 'Link bando': '#', Fonte: 'F11' },
+        { ID: 'B0004', Titolo: 'Young Lens Award under 30 (esempio)', Ente: 'Premio Giovani Visioni', Tipo: 'premio', Disciplina: 'fotografia', Paese: 'Italia', Scadenza: g(30), 'Scadenza confermata': 'sicura', 'Quota iscrizione': 35, Punteggio: 58, Esclusione: "Limite d'età: fino a 30 anni", Stato: 'Nuovo', 'Trovato il': g(-1), 'Link bando': '#', Fonte: 'F04' }
+      ]
+    });
+  }
+};
+
+chiama('getBandi').then(carica);
+</script>
+</body>
+</html>

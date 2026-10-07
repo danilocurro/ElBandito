@@ -1,0 +1,40 @@
+Campo,Valore,Note
+Tema,fotografia,"Cambiando tema e fonti, lo stesso motore cerca altro (es. cinema documentario, editoria)"
+Nome d'arte,Artista di esempio,Solo per i prompt; puoi lasciarlo così
+Anno di nascita,1990,"Serve per i limiti d'età (under 30, under 35…)"
+Base,Bologna,Città dove vivi o lavori
+Città di riferimento,Bologna,Etichetta sulla mappa e per le distanze
+Base lat,44.4949,
+Base lon,11.3426,
+Nazionalità,italiana,
+Paese,Italia,
+Regioni di residenza,Emilia-Romagna,Per i bandi riservati ai residenti
+Luoghi casa,"Emilia-Romagna, Bologna, Modena, Parma, Reggio Emilia, Ferrara, Ravenna, Rimini, Piacenza, Forlì, Cesena",Geografia: punteggio pieno
+Etichetta casa,Emilia-Romagna,
+Luoghi vicini,"Toscana, Veneto, Lombardia, Marche, Liguria, Firenze, Venezia, Milano",Geografia: 80%
+Etichetta vicini,regioni vicine,
+Si candida come,persona,persona | persona e associazione | persona e partita IVA
+Lingue,"italiano, inglese",
+Quota massima,50,Euro; sopra questa soglia il bando è escluso
+Giorni minimi preparazione,7,Sotto questi giorni alla scadenza il bando è escluso
+Disponibilità fuori casa (settimane),4,
+Discipline piene,"fotografia, lens-based, fotografia d'autore, documentario, photography",
+Discipline metà,"arti visive, multidisciplinare, video, cinema, visual arts",
+Temi,"paesaggio, territorio, memoria, acqua, migrazione, archivio, comunità",Temi ricorrenti del tuo lavoro
+Parole chiave,"bando fotografia, open call fotografia, premio fotografia, residenza artistica, photography open call, artist residency, photography grant, photo award",Usate dal connettore wordpress e da SearXNG
+Curriculum,Mostre collettive in Italia; un premio nazionale di fotografia; una residenza in Europa.,Solo dati professionali: entra nei prompt
+Paesi UE,"Austria, Belgio, Bulgaria, Cipro, Croazia, Danimarca, Estonia, Finlandia, Francia, Germania, Grecia, Irlanda, Lettonia, Lituania, Lussemburgo, Malta, Paesi Bassi, Polonia, Portogallo, Repubblica Ceca, Romania, Slovacchia, Slovenia, Spagna, Svezia, Ungheria, Norvegia, Islanda, Svizzera, Regno Unito",
+Peso disciplina,25,
+Peso tema,5,I pesi sommano a 85: il punteggio viene riportato su 100
+Peso geografia,10,
+Peso valore,15,
+Peso prestigio,15,
+Peso costo,15,
+Soglia avviso,80,Avviso email (web app) sopra questo punteggio
+Motore estrazione,auto,"auto (Gemini se c'è la chiave, poi Claude API, altrimenti Claude Code) | gemini | claude-api | agente"
+Modello estrazione,gemini-2.5-flash-lite,Piano gratuito
+Modello ripiego,claude-haiku-5-5,Se Gemini non rispetta lo schema
+Modello ricerca,claude-opus-5-5,Solo con Motore ricerca = claude-api; claude-sonnet-5-5 costa circa la metà
+Motore ricerca,agente,agente (la fa Claude Code) | claude-api (batch settimanale) | searxng
+Ricerche settimanali,20,Numero massimo di ricerche web per giro
+Filoni ricerca,,Vuoto = filoni predefiniti; altrimenti separati da ;

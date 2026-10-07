@@ -1,0 +1,8 @@
+{
+  "name": "elbandito",
+  "version": "0.2.0",
+  "description": "Trova, legge e ordina bandi, residenze, open call e premi per artisti visivi. Server MCP, dashboard locale e skill per raccolta, ricerca web e valutazione.",
+  "author": { "name": "ElBandito contributors" },
+  "license": "MIT",
+  "keywords": ["bandi", "open call", "residenze", "arte", "fotografia", "mcp"]
+}

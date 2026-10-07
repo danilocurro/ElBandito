@@ -1,0 +1,11 @@
+{
+  "name": "elbandito",
+  "owner": { "name": "ElBandito contributors" },
+  "plugins": [
+    {
+      "name": "elbandito",
+      "source": "./",
+      "description": "Bandi, residenze e open call per artisti visivi, dentro Claude Code."
+    }
+  ]
+}

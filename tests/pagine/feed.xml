@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>Rivista d'arte – Bandi e concorsi (esempio)</title>
+  <link>https://rivista.example/bandi/</link>
+  <item>
+    <title>Premio Portici per la fotografia: open call 2027</title>
+    <link>https://rivista.example/2026/10/premio-portici/</link>
+    <pubDate>Mon, 05 Oct 2026 09:00:00 +0200</pubDate>
+    <description>È aperto il bando.</description>
+  </item>
+  <item>
+    <title>Recensione: la mostra di autunno al museo civico</title>
+    <link>https://rivista.example/2026/10/recensione-mostra/</link>
+    <pubDate>Sun, 04 Oct 2026 09:00:00 +0200</pubDate>
+    <description>Una recensione della mostra.</description>
+  </item>
+</channel>
+</rss>

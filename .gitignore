@@ -1,0 +1,11 @@
+*.egg-info/
+*.pyc
+*.sqlite
+.env
+.pytest_cache/
+.venv/
+__pycache__/
+apps-script/.clasp.json
+dati/
+service-account*.json
+.claude/launch.json
