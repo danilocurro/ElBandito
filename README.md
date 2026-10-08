@@ -118,7 +118,7 @@ Serve se vuoi che ElBandito giri da solo ogni giorno, anche a computer spento.
    - Esegui una volta `installaTrigger`.
    - Pubblica come *App web*, eseguita come te, con accesso "Solo io".
 
-Per metterla in una pagina privata del tuo sito c'è un blocco pronto in [docs/pagina-sito.html](docs/pagina-sito.html). La web app è la stessa interfaccia della dashboard locale. In più ha l'assistente Gemini e le email, che vanno solo a te.
+Per aprirla da un indirizzo corto del tuo sito (es. `tuosito.it/elbandito`) c'è un blocco pronto in [docs/pagina-sito.html](docs/pagina-sito.html), che porta direttamente alla web app. La web app è la stessa interfaccia della dashboard locale. In più ha l'assistente Gemini e le email, che vanno solo a te.
 
 ### Condividere con chi fa la stessa ricerca
 

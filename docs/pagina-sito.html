@@ -1,25 +1,22 @@
 <!--
-  ElBandito — pagina del tuo sito a schermo intero
+  ElBandito — indirizzo corto sul tuo sito (es. tuosito.it/elbandito)
   (WordPress: blocco "HTML personalizzato"; altri CMS: modalità HTML/codice).
 
+  La pagina porta direttamente alla web app. Incorporarla in un riquadro (iframe) non è affidabile:
+  Google non mostra la richiesta di autorizzazione dentro un altro sito (errore 401) e Brave/Safari
+  bloccano i cookie di Google nei riquadri. Il reindirizzamento funziona ovunque, anche da telefono.
+
   1. Sostituisci URL_WEB_APP con l'indirizzo della tua web app (finisce con /exec).
-  2. Usa un modello di pagina senza intestazione e piè di pagina
-     (con Elementor: "Elementor Canvas"; altrimenti "pagina vuota"/"blank" del tema).
-  3. Pubblica la pagina come privata o nascosta (fuori dal menu, non indicizzata).
-     La protezione vera resta Google: la web app si apre solo con il tuo account ("Solo io").
-  4. Il pulsante ↗ apre la web app fuori dal sito: serve se il browser blocca l'accesso
-     a Google dentro la pagina (Safari, Brave con i cookie di terze parti disattivati).
+  2. Usa un modello di pagina senza intestazione (con Elementor: "Elementor Canvas").
+  3. Pubblicala nascosta: fuori dal menu e con "noindex" (es. Yoast → Avanzate → non mostrare nei risultati).
+     La protezione vera resta Google: la web app si apre solo con l'account autorizzato.
 -->
-<iframe class="elbandito-app" src="URL_WEB_APP" title="ElBandito" allow="clipboard-write"></iframe>
-<a class="elbandito-fuori" href="URL_WEB_APP" target="_blank" rel="noopener" title="Apri ElBandito fuori dal sito (se qui non si carica)">↗</a>
+<div class="elbandito-vai"><p>Apro ElBandito…</p><p><a href="URL_WEB_APP">Se non si apre da solo, tocca qui</a></p></div>
+<script>window.location.replace("URL_WEB_APP");</script>
 <style>
-  html, body { margin: 0 !important; padding: 0 !important; background: #0b0b0b; overflow: hidden; }
-  #wpadminbar { display: none !important; }
-  html { margin-top: 0 !important; }
-  .elbandito-app { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; border: 0; background: #0b0b0b; z-index: 1; }
-  .elbandito-fuori { position: fixed; right: 12px; bottom: 76px; z-index: 2; width: 36px; height: 36px; display: flex;
-    align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff;
-    text-decoration: none; font: 16px Helvetica, Arial, sans-serif; opacity: .6; }
-  .elbandito-fuori:hover { opacity: 1; }
-  @media (min-width: 721px) { .elbandito-fuori { bottom: 12px; } }
+  html, body { margin: 0 !important; background: #0b0b0b; }
+  #wpadminbar { display: none !important; } html { margin-top: 0 !important; }
+  .elbandito-vai { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #f2f2f2; font: 15px Helvetica, Arial, sans-serif; letter-spacing: .04em; }
+  .elbandito-vai a { color: #fff; }
 </style>
