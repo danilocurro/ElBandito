@@ -21,11 +21,11 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install .
+      - run: pip install -e .
       - name: Browser headless (solo se attivato)
         if: vars.USA_BROWSER == 'sì'
         run: |
-          pip install ".[browser]"
+          pip install -e ".[browser]"
           python -m playwright install --with-deps chromium
       - name: Archivio SQLite
         uses: actions/cache@v4

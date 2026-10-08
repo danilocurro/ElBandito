@@ -18,7 +18,19 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 FUSO = ZoneInfo("Europe/Rome")
-RADICE = Path(__file__).resolve().parent.parent
+def _radice() -> Path:
+    """La cartella del repository (seed/, apps-script/). Con un'installazione non "editable" il
+    pacchetto finisce in site-packages: allora si cerca nella directory corrente."""
+    accanto = Path(__file__).resolve().parent.parent
+    if (accanto / "seed").is_dir():
+        return accanto
+    for cartella in (Path.cwd(), *Path.cwd().parents):
+        if (cartella / "seed").is_dir() and (cartella / "elbandito").is_dir():
+            return cartella
+    return accanto
+
+
+RADICE = _radice()
 _contatto = os.environ.get("ELBANDITO_CONTATTO", "").strip()
 USER_AGENT = "ElBandito/0.2 (ricerca personale di bandi d'arte" + (f"; +{_contatto}" if _contatto else "") + ")"
 

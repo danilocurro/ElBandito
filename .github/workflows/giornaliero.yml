@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install .
+      - run: pip install -e .
       - name: Archivio SQLite
         uses: actions/cache@v4
         with:

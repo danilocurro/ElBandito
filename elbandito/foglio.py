@@ -17,7 +17,9 @@ from pathlib import Path
 from .config import Ambiente
 from .modelli import COLONNE
 
-CARTELLA_SEED = Path(__file__).resolve().parent.parent / "seed"
+from .config import RADICE
+
+CARTELLA_SEED = RADICE / "seed"
 
 
 class FoglioBase:
