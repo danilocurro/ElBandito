@@ -86,8 +86,10 @@ def _prestigio(ente: str, enti: list[dict]) -> tuple[float, str]:
     if not n:
         return 0.0, ""
     for e in enti:
-        ne = normalizza(e.get("Nome", ""))
-        if ne and (ne in n or n in ne or fuzz.token_set_ratio(n, ne) >= 88):
+        # il nome noto deve comparire per parole intere nell'ente del bando ("Fondazione CRT Torino"),
+        # o i due nomi devono essere quasi identici: "On the Move" non è "Cortona On The Move"
+        ne = normalizza(e.get("Nome", "").split("–")[0])
+        if ne and (re.search(rf"(?<!\w){re.escape(ne)}(?!\w)", n) or fuzz.ratio(n, ne) >= 90):
             livello = str(e.get("Livello", "")).strip()
             return {"1": 1.0, "2": 0.7, "3": 0.45}.get(livello, 0.5), e.get("Nome", "")
     return 0.0, ""

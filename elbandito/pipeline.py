@@ -340,7 +340,8 @@ def scheda_da_riga(b: dict):
     """Ricostruzione approssimata di una scheda dalle colonne del foglio (se manca lo storico grezzo)."""
     from .modelli import TIPI, SchedaEstratta
 
-    valore = re.findall(r"\d[\d.]*", str(b.get("Valore", "")).replace(".000", "000"))
+    testo_valore = re.sub(r"(?<=\d)[.,'](?=\d{3}\b)", "", str(b.get("Valore", "")))  # 32.700 → 32700
+    valore = re.findall(r"\d+(?:[.,]\d+)?", testo_valore)
     quota = str(b.get("Quota iscrizione", "")).replace(",", ".")
     return SchedaEstratta(
         titolo=b.get("Titolo", ""), ente=b.get("Ente", ""),
@@ -349,7 +350,7 @@ def scheda_da_riga(b: dict):
         paese=b.get("Paese", ""), regione=b.get("Regione", ""),
         citta="" if b.get("Città") == "online" else b.get("Città", ""), online=b.get("Città") == "online",
         quota_iscrizione_eur=float(quota) if re.fullmatch(r"\d+(\.\d+)?", quota) else None,
-        valore=b.get("Valore", ""), valore_eur=max((float(v) for v in valore if v.replace(".", "").isdigit()), default=None),
+        valore=b.get("Valore", ""), valore_eur=max((float(v.replace(",", ".")) for v in valore), default=None),
         include_mostra=bool(re.search(r"mostra|esposizion|catalogo|pubblicazion", str(b.get("Valore", "")), re.I)),
         copre_alloggio=bool(re.search(r"alloggio|accommodation", str(b.get("Valore", "")), re.I)),
         copre_viaggio=bool(re.search(r"viaggio|travel", str(b.get("Valore", "")), re.I)),

@@ -105,3 +105,19 @@ def test_arti_visive_generiche_valgono_meta(scheda_mare):
 
 def test_da_verificare_compare_nei_rischi(scheda_mare):
     assert "verificare" in valuta(v(scheda_mare, confermata=False), profilo(), enti()).rischi
+
+
+def test_enti_noti_solo_per_parole_intere(scheda_mare):
+    p, e = profilo(), enti()
+    for falso in ("On the Move", "Teatri Riflessi Festival", ".ART"):
+        scheda_mare.ente = falso
+        assert valuta(v(scheda_mare), p, e).dettaglio["prestigio"] == 3.0, falso  # 20%: ente non noto
+    scheda_mare.ente = "Fondazione CRT – Torino"
+    assert valuta(v(scheda_mare), p, e).dettaglio["prestigio"] == 10.5  # livello 2
+
+
+def test_importi_con_separatore_delle_migliaia():
+    from elbandito.pipeline import scheda_da_riga
+
+    assert scheda_da_riga({"Titolo": "x", "Valore": "fino a 32.700 € e alloggio"}).valore_eur == 32700
+    assert scheda_da_riga({"Titolo": "x", "Valore": "premio di 1.500,50 euro"}).valore_eur == 1500.5
