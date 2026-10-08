@@ -1,8 +1,8 @@
 name: Giro giornaliero
 
+# Solo a mano (Actions → Run workflow). Il giro automatico è quello settimanale del lunedì;
+# per un giro ogni mattina rimetti qui:  schedule: - cron: "0 4 * * *"
 on:
-  schedule:
-    - cron: "0 4 * * *" # 06:00 ora legale italiana (05:00 in inverno)
   workflow_dispatch:
 
 concurrency:

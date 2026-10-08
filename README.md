@@ -14,7 +14,7 @@ Il primo tema configurato è la fotografia d'autore, ma tema, fonti, profilo e p
 | --- | --- | --- |
 | **1. Dentro Claude Code** (consigliato) | [Claude Code](https://claude.com/claude-code) + [uv](https://docs.astral.sh/uv/) | Server MCP con 24 strumenti, 4 skill, regole. Claude raccoglie, estrae le schede, cerca sul web, spiega i punteggi, scrive bozze di statement. **Nessuna chiave API necessaria** |
 | **2. Dashboard locale** | uv | L'interfaccia completa nel browser (Oggi, Esplora con mappa e calendario, Pipeline, Enti, Fonti, Profilo) sui tuoi dati locali |
-| **3. Automatico nel cloud** (facoltativo) | GitHub, un foglio Google, chiave Gemini gratuita | Giro ogni mattina su GitHub Actions, foglio Google come database, web app Apps Script ed email: digest del lunedì, avvisi, promemoria |
+| **3. Automatico nel cloud** (facoltativo) | GitHub, un foglio Google, chiave Gemini gratuita | Giro ogni lunedì su GitHub Actions (o ogni mattina, a scelta), foglio Google come database, web app Apps Script ed email: digest del lunedì, avvisi, promemoria |
 
 I tre modi usano gli stessi dati e la stessa interfaccia: si possono combinare.
 
@@ -112,7 +112,7 @@ Serve se vuoi che ElBandito giri da solo ogni giorno, anche a computer spento.
 1. **Fork privato** di questo repository.
 2. **Foglio Google** vuoto. In [Google Cloud](https://console.cloud.google.com): abilita la Google Sheets API, crea un service account e scarica la chiave JSON. Condividi il foglio con l'email del service account come Editor.
 3. **Secrets del repository** (*Settings → Secrets and variables → Actions*): `ELBANDITO_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON` (il contenuto del JSON), `GEMINI_API_KEY`. Se vuoi la ricerca settimanale via API, anche `ANTHROPIC_API_KEY` e `Motore ricerca = claude-api` nel PROFILO.
-4. *Actions → Su richiesta dalla web app → Run workflow* con comando `prepara`: crea le schede dal seed. Poi aggiungi la *variable* `ELBANDITO_ATTIVO = si` (stessa pagina dei secrets, scheda Variables): solo da quel momento `giornaliero.yml` gira ogni mattina e `settimanale.yml` il lunedì.
+4. *Actions → Su richiesta dalla web app → Run workflow* con comando `prepara`: crea le schede dal seed. Poi aggiungi la *variable* `ELBANDITO_ATTIVO = si` (stessa pagina dei secrets, scheda Variables): solo da quel momento `settimanale.yml` gira ogni lunedì mattina (tutte le fonti). `giornaliero.yml` si avvia a mano; per un giro ogni mattina basta rimettergli lo `schedule`.
 5. **Web app**: nel foglio, *Estensioni → Apps Script*, copia `apps-script/Codice.gs`, `Index.html` e il manifest `appsscript.json` (oppure usa [clasp](https://github.com/google/clasp)).
    - In *Proprietà script* imposta `GEMINI_API_KEY` (assistente), `GITHUB_REPO` (`utente/ElBandito`) e `GITHUB_TOKEN` (token fine-grained con *Actions: write* solo su questo repository).
    - Esegui una volta `installaTrigger`.

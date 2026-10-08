@@ -148,7 +148,14 @@ def _gemini(prompt: str, amb: Ambiente, modello: str) -> Estrazione:
             "responseJsonSchema": Estrazione.model_json_schema(),
         },
     }
-    r = httpx.post(url, headers={"x-goog-api-key": amb.gemini_key}, json=corpo, timeout=90)
+    for tentativo in range(4):
+        r = httpx.post(url, headers={"x-goog-api-key": amb.gemini_key}, json=corpo, timeout=90)
+        if r.status_code not in (429, 503) or tentativo == 3:
+            break
+        # piano gratuito: poche richieste al minuto; si aspetta e si riprova
+        import time
+
+        time.sleep(int(r.headers.get("retry-after", 0) or 20 * (tentativo + 1)))
     r.raise_for_status()
     parti = r.json()["candidates"][0]["content"]["parts"]
     return Estrazione.model_validate_json("".join(p.get("text", "") for p in parti))
