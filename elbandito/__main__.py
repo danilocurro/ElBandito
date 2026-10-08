@@ -59,7 +59,9 @@ def main(argv: list[str] | None = None) -> int:
         from .dashboard import avvia
 
         apri(amb).prepara(con_seed=True)
-        avvia(amb, apri_browser=True, blocca=True)
+        import os
+
+        avvia(amb, porta=int(os.environ.get("PORT", 8787)), apri_browser=not os.environ.get("PORT"), blocca=True)
         return 0
 
     if a.comando == "coda":
