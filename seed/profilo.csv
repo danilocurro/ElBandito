@@ -38,3 +38,4 @@ Modello ricerca,claude-opus-5-5,Solo con Motore ricerca = claude-api; claude-son
 Motore ricerca,agente,agente (la fa Claude Code) | claude-api (batch settimanale) | searxng
 Ricerche settimanali,20,Numero massimo di ricerche web per giro
 Filoni ricerca,,Vuoto = filoni predefiniti; altrimenti separati da ;
+Link app,,Indirizzo da aprire dal pulsante delle email (es. la pagina del tuo sito); vuoto = la web app

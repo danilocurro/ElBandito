@@ -327,30 +327,98 @@ function mail_(oggetto, html) {
   MailApp.sendEmail({ to: Session.getEffectiveUser().getEmail(), subject: '[ElBandito] ' + oggetto, htmlBody: html, name: 'ElBandito' });
 }
 
-function urlApp_() { try { return ScriptApp.getService().getUrl(); } catch (e) { return ''; } }
-
-function rigaMail_(b) {
-  return '<tr><td style="padding:6px 10px;font-weight:bold">' + (b.Punteggio || '–') + '</td>' +
-    '<td style="padding:6px 10px"><a href="' + (b['Link bando'] || '#') + '">' + esc_(b.Titolo) + '</a><br>' +
-    '<span style="color:#666">' + esc_(b.Ente || '') + ' · ' + esc_(b.Motivazione || '') + '</span></td>' +
-    '<td style="padding:6px 10px;white-space:nowrap">' + (b.Scadenza || '—') +
-    (b['Scadenza confermata'] === 'sicura' ? '' : ' <em>(da verificare)</em>') + '</td></tr>';
+function urlApp_() {
+  var p = leggi_('PROFILO').filter(function (r) { return r.Campo === 'Link app'; })[0];
+  if (p && p.Valore) return p.Valore;  // es. la pagina del tuo sito
+  try { return ScriptApp.getService().getUrl(); } catch (e) { return ''; }
 }
 
-function tabella_(righe) {
-  return '<table style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;font-size:14px">' + righe.join('') + '</table>' +
-    (urlApp_() ? '<p><a href="' + urlApp_() + '">Apri ElBandito</a></p>' : '');
+function esc_(s) { return String(s === undefined || s === null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+/** Gruppi per tipo: gli stessi della web app. */
+var GRUPPI = [
+  ['Residenze d\'artista', ['residenza']],
+  ['Premi e concorsi', ['premio']],
+  ['Festival e open call', ['festival', 'open call']],
+  ['Grant, borse e commissioni', ['grant', 'borsa', 'commissione']],
+  ['Altro', []]
+];
+
+function gruppo_(b) {
+  var t = String(b.Tipo || '').toLowerCase();
+  for (var i = 0; i < GRUPPI.length - 1; i++) if (GRUPPI[i][1].indexOf(t) >= 0) return GRUPPI[i][0];
+  return 'Altro';
 }
 
-function esc_(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function giorniA_(iso) { return iso ? Math.round((new Date(iso + 'T12:00:00') - new Date(oggi_() + 'T12:00:00')) / 864e5) : null; }
 
-/** Lunedì: i 10 bandi migliori ancora da valutare. */
+function dataLunga_(iso) {
+  if (!iso) return 'senza scadenza';
+  var mesi = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+  var p = iso.split('-');
+  return Number(p[2]) + ' ' + mesi[Number(p[1]) - 1] + ' ' + p[0];
+}
+
+var F_ = 'font-family:Helvetica,Arial,sans-serif;';
+
+/** Una scheda bando in HTML da email (tabelle e stili in linea: funzionano in Gmail e Mail). */
+function schedaMail_(b) {
+  var g = giorniA_(b.Scadenza);
+  var colore = g === null ? '#888' : g <= 7 ? '#c0392b' : g <= 21 ? '#b7791f' : '#555';
+  var quota = b['Quota iscrizione'] === '' ? '' : (Number(b['Quota iscrizione']) === 0 ? 'gratuito' : b['Quota iscrizione'] + ' € di quota');
+  var dettagli = [b.Ente, [b['Città'], b.Paese].filter(String).join(', '), quota].filter(String).join(' · ');
+  return '<tr><td style="padding:0 0 12px 0">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e5e5e5;border-radius:6px">' +
+    '<tr><td width="58" valign="top" style="padding:14px 0 14px 14px">' +
+      '<div style="' + F_ + 'width:44px;height:44px;line-height:44px;border-radius:22px;background:#0b0b0b;color:#fff;text-align:center;font-weight:bold;font-size:16px">' + esc_(b.Punteggio || '–') + '</div></td>' +
+    '<td valign="top" style="padding:14px 14px 14px 10px;' + F_ + '">' +
+      '<a href="' + esc_(b['Link bando'] || '#') + '" style="color:#0b0b0b;font-weight:bold;font-size:15px;text-decoration:none">' + esc_(b.Titolo) + '</a>' +
+      '<div style="color:#666;font-size:13px;margin-top:3px">' + esc_(dettagli) + '</div>' +
+      (b.Motivazione ? '<div style="color:#333;font-size:13px;margin-top:6px">' + esc_(b.Motivazione) + '</div>' : '') +
+      (b.Valore ? '<div style="color:#333;font-size:13px;margin-top:2px">💶 ' + esc_(b.Valore) + '</div>' : '') +
+      '<div style="font-size:13px;margin-top:8px;color:' + colore + ';font-weight:bold">⏳ ' + dataLunga_(b.Scadenza) +
+        (g !== null ? ' · ' + (g === 0 ? 'oggi' : g === 1 ? 'domani' : 'fra ' + g + ' giorni') : '') +
+        (b['Scadenza confermata'] === 'sicura' ? '' : ' <span style="font-weight:normal;color:#b7791f">(da verificare sul sito)</span>') + '</div>' +
+    '</td></tr></table></td></tr>';
+}
+
+/** Corpo dell'email: intestazione, introduzione, bandi divisi per tipo, pulsante per l'app. */
+function corpoMail_(titolo, intro, bandi, perGruppo) {
+  var sezioni = '';
+  if (perGruppo) {
+    GRUPPI.forEach(function (gr) {
+      var qui = bandi.filter(function (b) { return gruppo_(b) === gr[0]; });
+      if (!qui.length) return;
+      sezioni += '<tr><td style="' + F_ + 'padding:18px 0 8px 0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#888;border-bottom:1px solid #eee">' +
+        esc_(gr[0]) + ' · ' + qui.length + '</td></tr><tr><td style="height:10px"></td></tr>' + qui.map(schedaMail_).join('');
+    });
+  } else {
+    sezioni = bandi.map(schedaMail_).join('');
+  }
+  var url = urlApp_();
+  return '<div style="background:#f4f4f4;padding:24px 12px">' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden">' +
+    '<tr><td style="background:#0b0b0b;padding:18px 24px;' + F_ + 'color:#fff;font-size:13px;letter-spacing:3px;font-weight:bold">ELBANDITO</td></tr>' +
+    '<tr><td style="padding:22px 24px 4px 24px;' + F_ + '"><div style="font-size:20px;font-weight:bold;color:#0b0b0b">' + esc_(titolo) + '</div>' +
+      '<div style="font-size:14px;color:#555;margin-top:6px">' + intro + '</div></td></tr>' +
+    '<tr><td style="padding:8px 24px 8px 24px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">' + sezioni + '</table></td></tr>' +
+    (url ? '<tr><td align="center" style="padding:8px 24px 26px 24px"><a href="' + esc_(url) + '" style="' + F_ + 'display:inline-block;background:#0b0b0b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:4px;font-size:14px;font-weight:bold">Apri ElBandito</a></td></tr>' : '') +
+    '<tr><td style="padding:14px 24px;background:#fafafa;' + F_ + 'font-size:11px;color:#999">Punteggio 0-100 sul tuo profilo. Le scadenze "da verificare" vanno controllate sul sito del bando. ElBandito non invia candidature: decidi tu.</td></tr>' +
+    '</table></div>';
+}
+
+/** Lunedì: i migliori bandi ancora da valutare, divisi per tipo (al massimo 5 per tipo). */
 function digestSettimanale() {
-  var migliori = leggi_('BANDI').filter(function (b) {
+  var vivi = leggi_('BANDI').filter(function (b) {
     return b.Stato === 'Nuovo' && !b.Esclusione && (!b.Scadenza || b.Scadenza >= oggi_());
-  }).sort(function (a, b) { return (b.Punteggio || 0) - (a.Punteggio || 0); }).slice(0, 10);
-  if (!migliori.length) return;
-  mail_('I 10 bandi della settimana', '<p>Ecco i bandi da valutare, ordinati per punteggio.</p>' + tabella_(migliori.map(rigaMail_)));
+  }).sort(function (a, b) { return (b.Punteggio || 0) - (a.Punteggio || 0); });
+  var scelti = [], conta = {};
+  vivi.forEach(function (b) { var g = gruppo_(b); conta[g] = (conta[g] || 0) + 1; if (conta[g] <= 5) scelti.push(b); });
+  if (!scelti.length) return;
+  var urgenti = vivi.filter(function (b) { var g = giorniA_(b.Scadenza); return g !== null && g <= 14; }).length;
+  var intro = scelti.length + ' bandi da valutare su ' + vivi.length + ' aperti, i migliori per ogni tipo.' +
+    (urgenti ? ' <b>' + urgenti + ' scadono entro due settimane.</b>' : '');
+  mail_('I bandi della settimana', corpoMail_('I bandi della settimana', intro, scelti, true));
 }
 
 /** Ogni mattina: avviso per i bandi ≥ soglia trovati ieri o oggi, e promemoria a 14/7/2 giorni. */
@@ -363,15 +431,17 @@ function controlloGiornaliero() {
   var forti = bandi.filter(function (b) {
     return Number(b.Punteggio) >= soglia && !b.Esclusione && b.Stato === 'Nuovo' && b['Trovato il'] >= ieri;
   });
-  if (forti.length) mail_(forti.length === 1 ? 'Un bando da guardare subito' : forti.length + ' bandi da guardare subito', tabella_(forti.map(rigaMail_)));
-
+  if (forti.length) {
+    var t = forti.length === 1 ? 'Un bando da guardare subito' : forti.length + ' bandi da guardare subito';
+    mail_(t, corpoMail_(t, 'Appena trovati, con punteggio di almeno ' + soglia + '.', forti, forti.length > 3));
+  }
   var promemoria = bandi.filter(function (b) {
     if (['Da preparare', 'Pronto'].indexOf(b.Stato) < 0 || !b.Scadenza) return false;
     if (b['Scadenza confermata'] !== 'sicura') return false; // le date non confermate non generano promemoria
-    var giorni = Math.round((new Date(b.Scadenza + 'T12:00:00') - new Date(oggi_() + 'T12:00:00')) / 864e5);
+    var giorni = giorniA_(b.Scadenza);
     return giorni === 14 || giorni === 7 || giorni === 2;
   });
-  if (promemoria.length) mail_('Scadenze in arrivo', tabella_(promemoria.map(rigaMail_)));
+  if (promemoria.length) mail_('Scadenze in arrivo', corpoMail_('Scadenze in arrivo', 'Candidature che stai preparando: mancano 14, 7 o 2 giorni.', promemoria, false));
 }
 
 /** Il primo del mese: candidature, esiti, fonti utili e fonti in errore. */
@@ -387,7 +457,7 @@ function riepilogoMensile() {
   }).join('') || '<li>nessuna</li>') + '</ul>' +
     '<h3>Fonti più utili</h3><ul>' + utili.map(function (f) { return '<li>' + esc_(f.Nome) + ': ' + f['Bandi portati'] + '</li>'; }).join('') + '</ul>' +
     '<h3>Fonti da controllare</h3><ul>' + (rotte.map(function (f) { return '<li>' + esc_(f.Nome) + ' — ' + esc_(f['Ultimo esito'] || '') + '</li>'; }).join('') || '<li>nessuna</li>') + '</ul>';
-  mail_('Riepilogo del mese', html);
+  mail_('Riepilogo del mese', '<div style="' + F_ + 'max-width:620px;margin:0 auto;font-size:14px;color:#222">' + html + '</div>');
 }
 
 /**

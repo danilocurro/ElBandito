@@ -52,6 +52,9 @@
   .etichetta.verde { color: var(--verde); border-color: var(--verde); }
   .etichetta.giallo { color: var(--giallo); border-color: var(--giallo); }
   .etichetta.rosso { color: var(--rosso); border-color: var(--rosso); }
+  .gruppo { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 6px; font-size: 13px; font-weight: 600; color: var(--testo); }
+  .gruppo:first-child { margin-top: 4px; }
+  .gruppo a { color: var(--tenue); font-weight: 400; font-size: 12px; }
   .vuoto { color: var(--tenue); padding: 14px; background: var(--carbone); border: 1px solid var(--linea); }
 
   .filtri { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
@@ -189,7 +192,7 @@
 /* ------------------------------------------------------------------ stato */
 var D = null;               // dati da getBandi()
 var vista = 'oggi';
-var filtri = { q: '', tipo: '', disciplina: '', paese: '', entro: '', quota: '', valore: '', minimo: '', esclusi: false, modo: 'lista' };
+var filtri = { q: '', gruppo: '', perTipo: true, tipo: '', disciplina: '', paese: '', entro: '', quota: '', valore: '', minimo: '', esclusi: false, modo: 'lista' };
 var meseCal = null;
 var mappa = null;
 var STATI_APERTI = ['Nuovo', 'Da preparare', 'Pronto'];
@@ -255,6 +258,33 @@ function elenco(bandi, vuoto) {
   return bandi.length ? '<div class="lista">' + bandi.map(voce).join('') + '</div>' : '<div class="vuoto">' + (vuoto || 'Niente da mostrare.') + '</div>';
 }
 
+/* Gruppi per tipo: gli stessi delle email (Codice.gs, GRUPPI) */
+var GRUPPI = [
+  ['Residenze d\'artista', ['residenza']],
+  ['Premi e concorsi', ['premio']],
+  ['Festival e open call', ['festival', 'open call']],
+  ['Grant, borse e commissioni', ['grant', 'borsa', 'commissione']],
+  ['Altro', []]
+];
+function gruppo(b) {
+  var t = String(b.Tipo || '').toLowerCase();
+  for (var i = 0; i < GRUPPI.length - 1; i++) if (GRUPPI[i][1].indexOf(t) >= 0) return GRUPPI[i][0];
+  return 'Altro';
+}
+/** Elenco diviso per tipo; con "massimo" mostra i primi N per tipo e un link al resto in Esplora. */
+function elencoPerGruppo(bandi, vuoto, massimo) {
+  if (!bandi.length) return '<div class="vuoto">' + (vuoto || 'Niente da mostrare.') + '</div>';
+  return GRUPPI.map(function (g) {
+    var qui = bandi.filter(function (b) { return gruppo(b) === g[0]; });
+    if (!qui.length) return '';
+    var altri = massimo && qui.length > massimo ? qui.length - massimo : 0;
+    return '<div class="gruppo"><span>' + esc(g[0]) + ' · ' + qui.length + '</span>' +
+      (altri ? '<a href="#" onclick="apriGruppo(' + JSON.stringify(g[0]).replace(/"/g, '&quot;') + ');return false">altri ' + altri + ' →</a>' : '') + '</div>' +
+      elenco(massimo ? qui.slice(0, massimo) : qui);
+  }).join('');
+}
+function apriGruppo(nome) { filtri.gruppo = nome; filtri.modo = 'lista'; vista = 'esplora'; disegna(); window.scrollTo(0, 0); }
+
 function perPunteggio(a, b) { return (num(b.Punteggio) || 0) - (num(a.Punteggio) || 0); }
 function perScadenza(a, b) { return String(a.Scadenza || '9999').localeCompare(String(b.Scadenza || '9999')); }
 
@@ -277,7 +307,7 @@ function vistaOggi() {
     var c = D.candidature[b.ID];
     return (b.Stato === 'Da preparare' || b.Stato === 'Pronto') && c && c.Checklist.some(function (v) { return !v.fatto; });
   });
-  return '<h2>Nuovi della settimana · ' + nuovi.length + '</h2>' + elenco(nuovi.slice(0, 15), 'Nessun bando nuovo negli ultimi 7 giorni.') +
+  return '<h2>Nuovi della settimana · ' + nuovi.length + '</h2>' + elencoPerGruppo(nuovi, 'Nessun bando nuovo negli ultimi 7 giorni.', 5) +
     '<h2>Scadenze nei prossimi 14 giorni</h2>' + elenco(vicini, 'Nessuna scadenza vicina.') +
     '<h2>Prossime azioni</h2>' + elenco(azioni, 'Niente in ritardo.') +
     '<h2>Candidature con materiali mancanti</h2>' + elenco(mancanti, 'Tutte le checklist sono complete.');
@@ -290,6 +320,7 @@ function filtrati() {
     if (['Scartato', 'Vinto', 'Non selezionato'].indexOf(b.Stato) >= 0 && !filtri.esclusi) return false;
     if (q && JSON.stringify([b.Titolo, b.Ente, b.Temi, b['Città'], b.Paese, b.Valore, b.Motivazione]).toLowerCase().indexOf(q) < 0) return false;
     if (filtri.tipo && b.Tipo !== filtri.tipo) return false;
+    if (filtri.gruppo && gruppo(b) !== filtri.gruppo) return false;
     if (filtri.disciplina && String(b.Disciplina).toLowerCase().indexOf(filtri.disciplina) < 0) return false;
     if (filtri.paese && b.Paese !== filtri.paese) return false;
     if (filtri.entro) { var g = giorniA(b.Scadenza); if (g === null || g > Number(filtri.entro)) return false; }
@@ -308,7 +339,7 @@ function unici(campo) { var s = {}; D.bandi.forEach(function (b) { if (b[campo])
 var filtriAperti = false;
 function filtriAttivi() {
   var f = filtri;
-  return [f.tipo, f.disciplina, f.paese, f.entro, f.quota, f.minimo, f.valore, f.esclusi].filter(function (x) { return x !== '' && x !== false && x !== undefined; }).length;
+  return [f.gruppo, f.tipo, f.disciplina, f.paese, f.entro, f.quota, f.minimo, f.valore, f.esclusi].filter(function (x) { return x !== '' && x !== false && x !== undefined; }).length;
 }
 function eMobile() { return window.matchMedia('(max-width: 720px)').matches; }
 
@@ -319,7 +350,7 @@ function vistaEsplora() {
     '<button class="bottone apri-filtri" onclick="filtriAperti=!filtriAperti;document.getElementById(\'filtriExtra\').classList.toggle(\'aperti\',filtriAperti)">Filtri' +
       (filtriAttivi() ? ' · ' + filtriAttivi() : '') + '</button>' +
     '<div class="filtri-extra' + (filtriAperti ? ' aperti' : '') + '" id="filtriExtra">' +
-    '<select onchange="filtri.tipo=this.value;aggiornaRisultati()">' + opzioni(unici('Tipo'), f.tipo, 'Tutti i tipi') + '</select>' +
+    '<select onchange="filtri.gruppo=this.value;aggiornaRisultati()">' + opzioni(GRUPPI.map(function (g) { return g[0]; }), f.gruppo, 'Tutti i tipi') + '</select>' +
     '<select onchange="filtri.disciplina=this.value;aggiornaRisultati()">' + opzioni(['fotografia', 'lens-based', 'arti visive', 'video', 'cinema', 'multidisciplinare'], f.disciplina, 'Ogni disciplina') + '</select>' +
     '<select onchange="filtri.paese=this.value;aggiornaRisultati()">' + opzioni(unici('Paese'), f.paese, 'Ogni paese') + '</select>' +
     '<select onchange="filtri.entro=this.value;aggiornaRisultati()"><option value="">Qualsiasi scadenza</option>' +
@@ -329,6 +360,7 @@ function vistaEsplora() {
     '<input type="number" min="0" max="100" step="5" placeholder="punti min." style="width:110px" value="' + esc(f.minimo) + '" oninput="filtri.minimo=this.value;aggiornaRisultati()">' +
     '<label class="sotto"><input type="checkbox"' + (f.valore ? ' checked' : '') + ' onchange="filtri.valore=this.checked;aggiornaRisultati()"> con premio</label>' +
     '<label class="sotto"><input type="checkbox"' + (f.esclusi ? ' checked' : '') + ' onchange="filtri.esclusi=this.checked;aggiornaRisultati()"> mostra esclusi</label>' +
+    '<label class="sotto"><input type="checkbox"' + (f.perTipo ? ' checked' : '') + ' onchange="filtri.perTipo=this.checked;aggiornaRisultati()"> dividi per tipo</label>' +
     '</div>' +
     '<span class="commuta">' + ['lista', 'mappa', 'calendario'].map(function (m) {
       return '<button class="' + (f.modo === m ? 'attivo' : '') + '" onclick="filtri.modo=\'' + m + '\';disegna()">' + m[0].toUpperCase() + m.slice(1) + '</button>';
@@ -341,7 +373,8 @@ function aggiornaRisultati() {
   var r = filtrati();
   var el = document.getElementById('risultati');
   if (!el) return;
-  if (filtri.modo === 'lista') el.innerHTML = '<div class="sotto" style="margin-bottom:8px">' + r.length + ' bandi</div>' + elenco(r, 'Nessun bando con questi filtri.');
+  if (filtri.modo === 'lista') el.innerHTML = '<div class="sotto" style="margin-bottom:8px">' + r.length + ' bandi</div>' +
+    (filtri.perTipo ? elencoPerGruppo(r, 'Nessun bando con questi filtri.') : elenco(r, 'Nessun bando con questi filtri.'));
   else if (filtri.modo === 'calendario') el.innerHTML = calendario(r);
   else { if (!mappa) { el.innerHTML = '<div id="mappa"></div>'; } disegnaMappa(r); }
 }
@@ -507,7 +540,7 @@ var SEZIONI_PROFILO = [
   ['Come ti candidi (filtri rigidi)', ['Si candida come', 'Lingue', 'Quota massima', 'Giorni minimi preparazione', 'Disponibilità fuori casa (settimane)']],
   ['Il tuo lavoro', ['Temi', 'Curriculum', 'Parole chiave']],
   ['Pesi del punteggio', ['Peso disciplina', 'Peso tema', 'Peso geografia', 'Peso valore', 'Peso prestigio', 'Peso costo', 'Soglia avviso']],
-  ['Motori e modelli', ['Motore estrazione', 'Motore ricerca', 'Modello estrazione', 'Modello ripiego', 'Modello ricerca', 'Ricerche settimanali', 'Filoni ricerca']]
+  ['Motori, modelli e link', ['Link app', 'Motore estrazione', 'Motore ricerca', 'Modello estrazione', 'Modello ripiego', 'Modello ricerca', 'Ricerche settimanali', 'Filoni ricerca']]
 ];
 var PRESET_PESI = {
   'equilibrato':    [25, 5, 10, 15, 15, 15],
