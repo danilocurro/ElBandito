@@ -1,27 +1,25 @@
 <!--
-  ElBandito — blocco da incollare in una pagina privata del tuo sito
+  ElBandito — pagina del tuo sito a schermo intero
   (WordPress: blocco "HTML personalizzato"; altri CMS: modalità HTML/codice).
 
   1. Sostituisci URL_WEB_APP con l'indirizzo della tua web app (finisce con /exec).
-  2. Pubblica la pagina come nascosta: fuori dal menu, non indicizzata, meglio se protetta da password.
+  2. Usa un modello di pagina senza intestazione e piè di pagina
+     (con Elementor: "Elementor Canvas"; altrimenti "pagina vuota"/"blank" del tema).
+  3. Pubblica la pagina come privata o nascosta (fuori dal menu, non indicizzata).
      La protezione vera resta Google: la web app si apre solo con il tuo account ("Solo io").
-  3. Dentro il riquadro serve l'accesso a Google; se il browser lo blocca (Safari, Brave con
-     i cookie di terze parti disattivati) usa il pulsante "Apri a schermo intero".
+  4. Il pulsante ↗ apre la web app fuori dal sito: serve se il browser blocca l'accesso
+     a Google dentro la pagina (Safari, Brave con i cookie di terze parti disattivati).
 -->
-<div class="elbandito">
-  <div class="elbandito-barra">
-    <strong>ElBandito</strong>
-    <a class="elbandito-pulsante" href="URL_WEB_APP" target="_blank" rel="noopener">Apri a schermo intero ↗</a>
-  </div>
-  <iframe src="URL_WEB_APP" title="ElBandito" loading="lazy" allow="clipboard-write"></iframe>
-  <p class="elbandito-nota">Non vedi niente qui sopra? Accedi a Google in questo browser, oppure usa "Apri a schermo intero".</p>
-</div>
+<iframe class="elbandito-app" src="URL_WEB_APP" title="ElBandito" allow="clipboard-write"></iframe>
+<a class="elbandito-fuori" href="URL_WEB_APP" target="_blank" rel="noopener" title="Apri ElBandito fuori dal sito (se qui non si carica)">↗</a>
 <style>
-  .elbandito { max-width: 1400px; margin: 0 auto; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-  .elbandito-barra { display: flex; justify-content: space-between; align-items: center; gap: 12px;
-    background: #0b0b0b; color: #f2f2f2; padding: 10px 16px; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; }
-  .elbandito-pulsante { color: #0b0b0b; background: #fff; padding: 6px 12px; text-decoration: none;
-    letter-spacing: .04em; text-transform: none; font-size: 13px; border-radius: 2px; }
-  .elbandito iframe { display: block; width: 100%; height: 85vh; min-height: 640px; border: 1px solid #222; background: #0b0b0b; }
-  .elbandito-nota { color: #888; font-size: 13px; margin: 8px 0 0; }
+  html, body { margin: 0 !important; padding: 0 !important; background: #0b0b0b; overflow: hidden; }
+  #wpadminbar { display: none !important; }
+  html { margin-top: 0 !important; }
+  .elbandito-app { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; border: 0; background: #0b0b0b; z-index: 1; }
+  .elbandito-fuori { position: fixed; right: 12px; bottom: 76px; z-index: 2; width: 36px; height: 36px; display: flex;
+    align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff;
+    text-decoration: none; font: 16px Helvetica, Arial, sans-serif; opacity: .6; }
+  .elbandito-fuori:hover { opacity: 1; }
+  @media (min-width: 721px) { .elbandito-fuori { bottom: 12px; } }
 </style>
