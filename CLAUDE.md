@@ -19,7 +19,7 @@ ElBandito trova bandi, residenze, open call, premi e grant per artisti visivi, l
 
 ## Sviluppo
 
-- Python ≥ 3.11, pacchetto unico `elbandito/`. Test: `uv run pytest -q` (devono restare verdi, e senza rete né chiavi).
+- Python ≥ 3.11, pacchetto unico `elbandito/`. Test: `uv run --extra dev pytest -q` (devono restare verdi, e senza rete né chiavi).
 - Il foglio si legge e si scrive per nome di colonna (`modelli.COLONNE`). Le date sono stringhe `aaaa-mm-gg`, fuso Europe/Rome.
 - La logica delle azioni è in `servizi.py` ed è duplicata in `apps-script/Codice.gs`: se cambi una, allinea l'altra.
 - L'interfaccia è una sola (`apps-script/Index.html`) per tre backend: Apps Script, dashboard locale (`/api/<nome>`) e dati d'esempio.

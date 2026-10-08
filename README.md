@@ -162,7 +162,7 @@ uv run elbandito --help
 I comandi sono: `configura`, `demo`, `dashboard`, `mcp`, `coda`, `prepara`, `giornaliero`, `settimanale`, `link URL`, `approfondisci ID`, `ricalcola` e `richiamo` (copertura e richiamo dell'insieme d'oro, il test di regressione della rete di fonti).
 
 ```bash
-uv run pytest -q
+uv run --extra dev pytest -q
 ```
 
 ## Limiti noti
