@@ -539,7 +539,8 @@ function vistaProfilo() {
   var sezioni = SEZIONI_PROFILO.concat(altri.length ? [['Altro', altri]] : []);
   return '<h2>Il tuo profilo</h2><p class="sotto">Questi valori decidono quali bandi vengono esclusi e in che ordine compaiono gli altri. ' +
     'Restano nei tuoi dati, mai nel repository. La guida campo per campo è in <b>docs/GUIDA-PROFILO.md</b>; in Claude Code puoi anche dire «impostiamo il mio profilo».</p>' +
-    '<div class="filtri"><button class="bottone pieno" onclick="chiama(\'avviaCollettore\',\'ricalcola\',\'\').then(avvisa)">Ricalcola ora</button></div>' +
+    '<div class="filtri"><button class="bottone pieno" onclick="chiama(\'avviaCollettore\',\'ricalcola\',\'\').then(avvisa)">Ricalcola ora</button>' +
+    (MODO === 'appsscript' ? '<button class="bottone" onclick="chiama(\'attivaEmail\').then(avvisa)">Ricevi le email di ElBandito</button>' : '') + '</div>' +
     sezioni.map(function (s) {
       var campi = s[1].filter(function (c) { return c in D.profilo; });
       if (!campi.length) return '';

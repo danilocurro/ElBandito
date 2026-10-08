@@ -35,3 +35,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python -m elbandito giornaliero -v
+      - name: Copia nei fogli condivisi (se ce ne sono)
+        env:
+          ELBANDITO_SHEET_ID: ${{ secrets.ELBANDITO_SHEET_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          ELBANDITO_FOGLI_CONDIVISI: ${{ secrets.ELBANDITO_FOGLI_CONDIVISI }}
+        run: python -m elbandito sincronizza

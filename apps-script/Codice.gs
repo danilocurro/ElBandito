@@ -390,6 +390,15 @@ function riepilogoMensile() {
   mail_('Riepilogo del mese', html);
 }
 
+/**
+ * Pulsante "Ricevi le email" nella web app. Con il deployment "Esegui come: utente che accede"
+ * i trigger nascono sull'account di chi lo preme, quindi le email arrivano a lui.
+ */
+function attivaEmail() {
+  installaTrigger();
+  return 'Email attivate per ' + Session.getEffectiveUser().getEmail() + ': riepilogo il lunedì, promemoria delle scadenze ogni mattina.';
+}
+
 /** Da eseguire una volta dall'editor: installa i trigger delle notifiche. */
 function installaTrigger() {
   ScriptApp.getProjectTriggers().forEach(function (t) { ScriptApp.deleteTrigger(t); });

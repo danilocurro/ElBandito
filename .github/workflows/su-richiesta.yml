@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       comando:
-        description: "link | approfondisci | ricalcola | giornaliero | prepara | richiamo"
+        description: "link | approfondisci | ricalcola | giornaliero | prepara | richiamo | sincronizza"
         required: true
         default: link
       argomento:
@@ -41,11 +41,12 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ELBANDITO_FOGLI_CONDIVISI: ${{ secrets.ELBANDITO_FOGLI_CONDIVISI }}
           COMANDO: ${{ inputs.comando }}
           ARGOMENTO: ${{ inputs.argomento }}
         run: |
           case "$COMANDO" in
-            link|approfondisci|ricalcola|giornaliero|prepara|richiamo) ;;
+            link|approfondisci|ricalcola|giornaliero|prepara|richiamo|sincronizza) ;;
             *) echo "Comando non ammesso: $COMANDO"; exit 1 ;;
           esac
           python -m elbandito "$COMANDO" ${ARGOMENTO:+"$ARGOMENTO"} -v

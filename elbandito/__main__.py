@@ -11,6 +11,7 @@
   link URL      estrae un bando da un link incollato
   approfondisci ID   indagine "cerca a fondo" su un bando (giuria, vincitori, reputazione)
   ricalcola     ricalcola punteggi ed esclusioni dopo un cambio di PROFILO
+  sincronizza   copia i bandi nei fogli condivisi (ELBANDITO_FOGLI_CONDIVISI)
   richiamo      misura copertura e richiamo sull'insieme d'oro
 """
 
@@ -23,7 +24,7 @@ import sys
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="elbandito", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("comando", choices=["configura", "demo", "dashboard", "mcp", "coda", "prepara", "giornaliero", "settimanale", "link", "approfondisci", "ricalcola", "richiamo"])
+    ap.add_argument("comando", choices=["configura", "demo", "dashboard", "mcp", "coda", "prepara", "giornaliero", "settimanale", "link", "approfondisci", "ricalcola", "richiamo", "sincronizza"])
     ap.add_argument("url", nargs="?", help="URL (link) o ID del bando (approfondisci)")
     ap.add_argument("-v", "--verboso", action="store_true")
     a = ap.parse_args(argv)
@@ -109,6 +110,16 @@ def main(argv: list[str] | None = None) -> int:
         from .pipeline import approfondisci
 
         print(approfondisci(a.url, amb))
+        return 0
+
+    if a.comando == "sincronizza":
+        from .sincronizza import fogli_condivisi, sincronizza
+
+        if not fogli_condivisi():
+            print("Nessun foglio condiviso: imposta ELBANDITO_FOGLI_CONDIVISI (ID separati da virgola)")
+            return 0
+        for sid, e in sincronizza(amb).items():
+            print(f"{sid[:8]}…: {e['nuovi']} nuovi, {e['aggiornati']} aggiornati" + (f" ({'; '.join(e['note'])})" if e["note"] else ""))
         return 0
 
     if a.comando == "ricalcola":
