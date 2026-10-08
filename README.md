@@ -120,6 +120,16 @@ Serve se vuoi che ElBandito giri da solo ogni giorno, anche a computer spento.
 
 Per metterla in una pagina privata del tuo sito c'è un blocco pronto in [docs/pagina-sito.html](docs/pagina-sito.html). La web app è la stessa interfaccia della dashboard locale. In più ha l'assistente Gemini e le email, che vanno solo a te.
 
+### Condividere con chi fa la stessa ricerca
+
+Se un'altra persona ha lo stesso profilo di ricerca (età, residenza, lingue, quota), può avere un suo ElBandito senza un secondo giro di raccolta:
+
+1. crea un foglio per lei e condividilo come Editor con lei e con il service account;
+2. aggiungi il suo ID al secret `ELBANDITO_FOGLI_CONDIVISI` (più ID separati da virgola);
+3. lega al suo foglio una copia di Codice.gs e Index.html e pubblicala con *Esegui come: utente che accede* e *Chiunque abbia un account Google*.
+
+Il collettore copia i bandi e i punteggi nel suo foglio a ogni giro (`elbandito sincronizza`). Stato, note, checklist ed email restano di chi usa quel foglio; il curriculum, lo storico con gli enti e le candidature del proprietario non vengono copiati. Nella sua web app, il pulsante "Ricevi le email di ElBandito" attiva le notifiche per il suo account.
+
 ## Come funziona
 
 ```
