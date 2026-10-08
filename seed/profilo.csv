@@ -32,7 +32,7 @@ Peso prestigio,15,Quanto contano gli enti noti (scheda ENTI) e i bandi segnalati
 Peso costo,15,Quanto conta che sia gratuito. I pesi vengono riportati su 100: conta il rapporto tra loro
 Soglia avviso,80,Web app: email il giorno stesso per i bandi sopra questo punteggio
 Motore estrazione,auto,"auto (Gemini se c'è la chiave, poi Claude API, altrimenti Claude Code) | gemini | claude-api | agente"
-Modello estrazione,gemini-2.5-flash-lite,Piano gratuito
+Modello estrazione,gemini-flash-lite-latest,Piano gratuito
 Modello ripiego,claude-haiku-5-5,Se Gemini non rispetta lo schema
 Modello ricerca,claude-opus-5-5,Solo con Motore ricerca = claude-api; claude-sonnet-5-5 costa circa la metà
 Motore ricerca,agente,agente (la fa Claude Code) | claude-api (batch settimanale) | searxng

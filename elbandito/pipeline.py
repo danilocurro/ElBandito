@@ -288,8 +288,32 @@ class Giro:
         self.foglio.aggiungi("LOG", [self.res.riga_log(time.monotonic() - inizio)])
         self.arch.chiudi()
 
+    def elabora_coda(self, limite: int = 40) -> int:
+        """Riprova le pagine in coda con il motore API (se ora c'è una chiave). Restano in coda se no."""
+        if self.estrattore.motore == "agente" or not (self.amb.gemini_key or self.amb.anthropic_key):
+            return 0
+        fatte = 0
+        for voce in self.arch.in_coda(limite):
+            pagina = Pagina(url=voce["url"], titolo=voce["titolo"], testo=voce["testo"], fonte=voce["fonte"],
+                            strutturato=json.loads(voce["strutturato"] or "{}"))
+            try:
+                verificate = self.estrattore.estrai(pagina)
+            except DaEstrarre:
+                break
+            except Exception as e:
+                self.res.errori.append(f"estrazione {pagina.url}: {e}")
+                continue
+            self.res.pagine += 1
+            self.registra_verificate(pagina, verificate)
+            self.arch.togli(pagina.url)
+            fatte += 1
+        if fatte:
+            self.res.note.append(f"estratte {fatte} pagine rimaste in coda")
+        return fatte
+
     def esegui(self) -> Resoconto:
         inizio = time.monotonic()
+        self.elabora_coda()
         self.leggi_fonti()
         if self.tipo == "settimanale":
             self.ricerca()

@@ -15,7 +15,7 @@
 var FUSO = 'Europe/Rome';
 var STATI = ['Nuovo', 'Da preparare', 'Pronto', 'Inviato', 'Vinto', 'Non selezionato',
              'Scartato', 'In attesa edizione', 'Archiviato'];
-var MODELLO_GEMINI = 'gemini-2.5-flash-lite';
+var MODELLO_GEMINI = 'gemini-flash-lite-latest';
 
 // ---------------------------------------------------------------- web app
 

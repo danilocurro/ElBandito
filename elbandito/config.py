@@ -103,7 +103,7 @@ PREDEFINITI = {
     "Peso costo": "15",
     "Soglia avviso": "80",
     "Motore estrazione": "auto",
-    "Modello estrazione": "gemini-2.5-flash-lite",
+    "Modello estrazione": "gemini-flash-lite-latest",
     "Modello ripiego": "claude-haiku-5-5",
     "Modello ricerca": "claude-opus-5-5",
     "Motore ricerca": "agente",

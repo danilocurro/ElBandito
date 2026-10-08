@@ -55,3 +55,15 @@ def test_ricerca_agente_non_chiama_api(monkeypatch):
     amb, foglio, _ = giro_senza_chiavi(monkeypatch)
     res = pipeline.Giro("settimanale", amb, foglio).esegui()
     assert any("Claude Code" in n for n in res.note)
+
+
+def test_con_una_chiave_la_coda_si_svuota_al_giro_dopo(monkeypatch, scheda_mare):
+    from elbandito.modelli import Estrazione
+
+    amb, foglio, res = giro_senza_chiavi(monkeypatch)
+    assert res.in_coda == 1
+    monkeypatch.setenv("GEMINI_API_KEY", "prova")
+    monkeypatch.setattr(pipeline.Estrattore, "_llm", lambda self, p: Estrazione(bandi=[scheda_mare.model_copy()]))
+    res = pipeline.Giro("giornaliero", Ambiente(), foglio).esegui()
+    assert res.nuovi == 1 and any("coda" in n for n in res.note)
+    assert Archivio(Ambiente().cartella_dati / "archivio.sqlite").quanti_in_coda() == 0
