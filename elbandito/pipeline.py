@@ -99,24 +99,50 @@ def _applica_esito(riga: dict, v: SchedaVerificata, profilo: Profilo, enti: list
     })
 
 
+GEOCODER = "https://geocoding-api.open-meteo.com/v1/search"  # gratuito, senza chiave, nessun divieto per i robot
+
+
 def geocodifica(rete: Rete, arch: Archivio, citta: str, paese: str) -> tuple[float, float] | None:
-    luogo = ", ".join(x for x in (citta, paese) if x and x != "online")
+    """Coordinate di città (o, se manca, del paese) con Open-Meteo. Si memorizzano solo i successi."""
+    citta = "" if citta == "online" else (citta or "").strip()
+    paese = (paese or "").strip()
+    luogo = ", ".join(x for x in (citta, paese) if x)
     if not luogo:
         return None
     nota = arch.geo(luogo)
-    if nota is not False:
-        return nota  # già cercato (anche senza esito)
+    if nota:
+        return nota
     coord = None
     try:
-        r = rete.get("https://nominatim.openstreetmap.org/search",
-                     params={"q": luogo, "format": "json", "limit": 1, "accept-language": "it"})
-        dati = r.json()
-        if dati:
-            coord = (float(dati[0]["lat"]), float(dati[0]["lon"]))
+        r = rete.get(GEOCODER, params={"name": citta or paese, "count": 5, "language": "it", "format": "json"})
+        risultati = r.json().get("results") or []
+        if not citta:  # solo il paese: preferisci lo stato, non una città omonima
+            risultati = sorted(risultati, key=lambda x: not str(x.get("feature_code", "")).startswith("PCL"))
+        elif paese:
+            stesso = [x for x in risultati if dedup.normalizza(x.get("country", "")) == dedup.normalizza(paese)]
+            risultati = stesso or risultati
+        if risultati:
+            coord = (float(risultati[0]["latitude"]), float(risultati[0]["longitude"]))
     except Exception as e:  # la mappa è un di più: un errore qui non ferma il giro
         log.info("Geocodifica fallita per %s: %s", luogo, e)
-    arch.salva_geo(luogo, coord)
+    if coord:
+        arch.salva_geo(luogo, coord)
     return coord
+
+
+def completa_coordinate(g: "Giro", massimo: int = 60) -> int:
+    """Aggiunge Lat/Lon ai bandi che non le hanno ancora (righe vecchie, giri falliti)."""
+    fatti = 0
+    for b in g.bandi:
+        if fatti >= massimo:
+            break
+        if b.get("Lat") or b.get("Stato") == "Archiviato" or not (b.get("Città") or b.get("Paese")):
+            continue
+        coord = geocodifica(g.rete, g.arch, b.get("Città", ""), b.get("Paese", ""))
+        if coord:
+            g.modifiche.setdefault(b["ID"], {}).update({"Lat": round(coord[0], 5), "Lon": round(coord[1], 5)})
+            fatti += 1
+    return fatti
 
 
 class Giro:
@@ -315,6 +341,9 @@ class Giro:
         inizio = time.monotonic()
         self.elabora_coda()
         self.leggi_fonti()
+        n = completa_coordinate(self)
+        if n:
+            self.res.note.append(f"coordinate aggiunte a {n} bandi")
         if self.tipo == "settimanale":
             self.ricerca()
         self.scrivi(inizio)

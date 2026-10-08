@@ -67,11 +67,10 @@ class Archivio:
         )
 
     # --- geocodifica ---
-    def geo(self, luogo: str) -> tuple[float, float] | None | bool:
+    def geo(self, luogo: str) -> tuple[float, float] | None:
+        """Coordinate già trovate per questo luogo, oppure None (mai cercato o senza esito: si riprova)."""
         r = self.db.execute("SELECT lat, lon FROM geo WHERE luogo=?", (luogo,)).fetchone()
-        if r is None:
-            return False  # mai cercato
-        return None if r[0] is None else (r[0], r[1])
+        return (r[0], r[1]) if r and r[0] is not None else None
 
     def salva_geo(self, luogo: str, coord: tuple[float, float] | None) -> None:
         lat, lon = coord if coord else (None, None)

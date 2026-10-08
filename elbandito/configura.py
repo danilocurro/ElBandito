@@ -67,17 +67,17 @@ def _domanda(chiedi: Callable[[str], str], testo: str, attuale: str, aiuto: str)
 
 
 def _coordinate(citta: str) -> tuple[str, str] | None:
-    """Coordinate della città da OpenStreetMap (Nominatim), se raggiungibile."""
+    """Coordinate della città con Open-Meteo (gratuito, senza chiave), se raggiungibile."""
     try:
         import httpx
 
         from .config import USER_AGENT
 
-        r = httpx.get("https://nominatim.openstreetmap.org/search", headers={"User-Agent": USER_AGENT},
-                      params={"q": citta, "format": "json", "limit": 1}, timeout=15)
-        dati = r.json()
+        r = httpx.get("https://geocoding-api.open-meteo.com/v1/search", headers={"User-Agent": USER_AGENT},
+                      params={"name": citta.split(",")[0].strip(), "count": 1, "language": "it"}, timeout=15)
+        dati = r.json().get("results") or []
         if dati:
-            return f"{float(dati[0]['lat']):.4f}", f"{float(dati[0]['lon']):.4f}"
+            return f"{float(dati[0]['latitude']):.4f}", f"{float(dati[0]['longitude']):.4f}"
     except Exception:
         pass
     return None

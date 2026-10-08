@@ -97,3 +97,21 @@ def test_frequenze():
     # il 7/10/2026 è mercoledì: le fonti settimanali aspettano lunedì o il giro settimanale
     assert not pipeline.da_leggere({"Attiva": "sì", "Connettore": "watch", "Frequenza": "settimanale"}, "giornaliero")
     assert pipeline.da_leggere({"Attiva": "sì", "Connettore": "watch", "Frequenza": "settimanale"}, "settimanale")
+
+
+def test_geocodifica_open_meteo(tmp_path):
+    import json
+
+    from conftest import rete_finta
+
+    from elbandito.archivio import Archivio
+
+    citta = {"results": [{"name": "Venezia", "country": "Stati Uniti", "latitude": 1, "longitude": 1, "feature_code": "PPL"},
+                         {"name": "Venezia", "country": "Italia", "latitude": 45.437, "longitude": 12.333, "feature_code": "PPLA"}]}
+    rete = rete_finta({pipeline.GEOCODER: (200, "application/json", json.dumps(citta))})
+    arch = Archivio(tmp_path / "a.sqlite")
+    assert pipeline.geocodifica(rete, arch, "Venezia", "Italia") == (45.437, 12.333)  # il paese giusto vince
+    assert arch.geo("Venezia, Italia") == (45.437, 12.333)
+    vuota = rete_finta({pipeline.GEOCODER: (200, "application/json", '{"results": []}')})
+    assert pipeline.geocodifica(vuota, arch, "Nessunposto", "") is None
+    assert arch.geo("Nessunposto") is None  # i fallimenti non si memorizzano: al prossimo giro si riprova

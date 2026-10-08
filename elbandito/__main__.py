@@ -11,6 +11,7 @@
   link URL      estrae un bando da un link incollato
   approfondisci ID   indagine "cerca a fondo" su un bando (giuria, vincitori, reputazione)
   ricalcola     ricalcola punteggi ed esclusioni dopo un cambio di PROFILO
+  coordinate    aggiunge le coordinate (mappa) ai bandi che non le hanno
   sincronizza   copia i bandi nei fogli condivisi (ELBANDITO_FOGLI_CONDIVISI)
   richiamo      misura copertura e richiamo sull'insieme d'oro
 """
@@ -24,7 +25,7 @@ import sys
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="elbandito", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("comando", choices=["configura", "demo", "dashboard", "mcp", "coda", "prepara", "giornaliero", "settimanale", "link", "approfondisci", "ricalcola", "richiamo", "sincronizza"])
+    ap.add_argument("comando", choices=["configura", "demo", "dashboard", "mcp", "coda", "prepara", "giornaliero", "settimanale", "link", "approfondisci", "ricalcola", "richiamo", "sincronizza", "coordinate"])
     ap.add_argument("url", nargs="?", help="URL (link) o ID del bando (approfondisci)")
     ap.add_argument("-v", "--verboso", action="store_true")
     a = ap.parse_args(argv)
@@ -110,6 +111,18 @@ def main(argv: list[str] | None = None) -> int:
         from .pipeline import approfondisci
 
         print(approfondisci(a.url, amb))
+        return 0
+
+    if a.comando == "coordinate":
+        import time as _t
+
+        from .pipeline import Giro, completa_coordinate
+
+        g = Giro("coordinate", amb)
+        n = completa_coordinate(g, massimo=500)
+        g.res.note.append(f"coordinate aggiunte a {n} bandi")
+        g.scrivi(_t.monotonic())
+        print(f"Coordinate aggiunte a {n} bandi")
         return 0
 
     if a.comando == "sincronizza":
