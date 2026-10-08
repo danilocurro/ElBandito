@@ -9,3 +9,4 @@ apps-script/.clasp.json
 dati/
 service-account*.json
 .claude/launch.json
+.DS_Store
