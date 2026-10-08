@@ -104,14 +104,60 @@
   .bozza { white-space: pre-wrap; background: var(--nero); border: 1px solid var(--linea); padding: 12px; font-size: 14px; }
   .caricamento { color: var(--tenue); padding: 40px; text-align: center; }
 
+  .apri-filtri { display: none; }
+  .solo-mobile { display: none; }
+  .filtri-extra { display: contents; }
+  .agenda { display: grid; gap: 1px; background: var(--linea); border: 1px solid var(--linea); }
+  .agenda .giorno-agenda { background: var(--carbone); padding: 10px 12px; }
+  .agenda .giorno-agenda.oggi { box-shadow: inset 3px 0 0 var(--accento); }
+  .agenda .data-agenda { font-size: 12px; color: var(--tenue); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .agenda .evento { white-space: normal; padding: 6px 8px; margin-top: 6px; }
+
   @media (max-width: 720px) {
-    header { padding: 12px 16px; gap: 10px; }
-    main { padding: 16px; }
-    .voce { grid-template-columns: 44px 1fr; }
-    .voce .destra { grid-column: 2; text-align: left; }
-    .griglia { grid-template-columns: 1fr; }
-    .mese .giorno { min-height: 60px; }
-    #mappa { height: 420px; }
+    header { padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); gap: 8px; flex-wrap: nowrap; }
+    .marchio { font-size: 12px; }
+    /* navigazione in basso, a portata di pollice */
+    nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--nero); border-top: 1px solid var(--linea);
+      flex-wrap: nowrap; overflow-x: auto; gap: 0; padding: 0 4px env(safe-area-inset-bottom); scrollbar-width: none; }
+    nav::-webkit-scrollbar { display: none; }
+    nav button { flex: 1 0 auto; min-width: 66px; padding: 15px 10px; font-size: 11px; }
+    nav button.attivo { border-bottom: 0; box-shadow: inset 0 2px 0 var(--accento); }
+    main { padding: 14px 16px calc(84px + env(safe-area-inset-bottom)); }
+    h2 { margin-top: 22px; }
+    /* niente zoom automatico dell'iPhone quando si scrive; bersagli più grandi */
+    input, select, textarea { font-size: 16px; }
+    .bottone { min-height: 40px; }
+    .bottone.piccolo { min-height: 34px; padding: 4px 10px; }
+    .voce { grid-template-columns: 44px 1fr; gap: 10px; padding: 12px; }
+    .voce .destra { grid-column: 2; text-align: left; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; white-space: normal; }
+    .voce .destra .sotto { margin-left: auto; }
+    .filtri input[type=search] { flex: 1 1 100%; }
+    .apri-filtri { display: inline-flex; align-items: center; }
+    .filtri-extra { display: none; }
+    .filtri-extra.aperti { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+    .filtri-extra select, .filtri-extra input[type=number] { flex: 1 1 45%; width: auto !important; min-width: 0; }
+    .commuta { display: flex; width: 100%; }
+    .commuta button { flex: 1; padding: 10px; }
+    .colonne { grid-auto-columns: 86vw; scroll-snap-type: x mandatory; }
+    .colonna { scroll-snap-align: start; }
+    #mappa { height: 62vh; }
+    .pannello { width: 100%; border-left: 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom)); }
+    .chiudi { position: sticky; top: 0; float: right; z-index: 2; width: 44px; height: 44px; margin: 6px -8px 0 0;
+      background: var(--carbone); border-radius: 50%; }
+    .pannello h1 { font-size: 19px; margin-top: 0; padding-top: 12px; }
+    .riga-azioni .bottone { flex: 1 1 auto; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
+    .conto { font-size: 26px; }
+    .messaggio { bottom: calc(72px + env(safe-area-inset-bottom)); max-width: 90vw; text-align: center; }
+    /* tabelle → schede impilate */
+    table.dati, table.dati tbody, table.dati tr, table.dati td, table.dati th { display: block; width: 100% !important; }
+    table.dati tr:first-child:has(th + th) { display: none; }
+    table.dati tr { border-bottom: 1px solid var(--linea); padding: 10px 0; }
+    table.dati td, table.dati th { border: 0; padding: 3px 0; }
+    table.dati th { color: var(--testo); text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; }
+    .solo-desktop { display: none !important; }
+    .solo-mobile { display: inline; }
+    table.dati td[data-etichetta]::before { content: attr(data-etichetta) " · "; color: var(--tenue); font-size: 11px;
+      text-transform: uppercase; letter-spacing: .06em; }
   }
 </style>
 </head>
@@ -259,10 +305,20 @@ function opzioni(valori, scelto, vuota) {
 }
 function unici(campo) { var s = {}; D.bandi.forEach(function (b) { if (b[campo]) s[b[campo]] = 1; }); return Object.keys(s).sort(); }
 
+var filtriAperti = false;
+function filtriAttivi() {
+  var f = filtri;
+  return [f.tipo, f.disciplina, f.paese, f.entro, f.quota, f.minimo, f.valore, f.esclusi].filter(function (x) { return x !== '' && x !== false && x !== undefined; }).length;
+}
+function eMobile() { return window.matchMedia('(max-width: 720px)').matches; }
+
 function vistaEsplora() {
   var f = filtri;
   var html = '<div class="filtri">' +
     '<input type="search" placeholder="Cerca titolo, ente, tema, luogo…" value="' + esc(f.q) + '" oninput="filtri.q=this.value;aggiornaRisultati()">' +
+    '<button class="bottone apri-filtri" onclick="filtriAperti=!filtriAperti;document.getElementById(\'filtriExtra\').classList.toggle(\'aperti\',filtriAperti)">Filtri' +
+      (filtriAttivi() ? ' · ' + filtriAttivi() : '') + '</button>' +
+    '<div class="filtri-extra' + (filtriAperti ? ' aperti' : '') + '" id="filtriExtra">' +
     '<select onchange="filtri.tipo=this.value;aggiornaRisultati()">' + opzioni(unici('Tipo'), f.tipo, 'Tutti i tipi') + '</select>' +
     '<select onchange="filtri.disciplina=this.value;aggiornaRisultati()">' + opzioni(['fotografia', 'lens-based', 'arti visive', 'video', 'cinema', 'multidisciplinare'], f.disciplina, 'Ogni disciplina') + '</select>' +
     '<select onchange="filtri.paese=this.value;aggiornaRisultati()">' + opzioni(unici('Paese'), f.paese, 'Ogni paese') + '</select>' +
@@ -273,6 +329,7 @@ function vistaEsplora() {
     '<input type="number" min="0" max="100" step="5" placeholder="punti min." style="width:110px" value="' + esc(f.minimo) + '" oninput="filtri.minimo=this.value;aggiornaRisultati()">' +
     '<label class="sotto"><input type="checkbox"' + (f.valore ? ' checked' : '') + ' onchange="filtri.valore=this.checked;aggiornaRisultati()"> con premio</label>' +
     '<label class="sotto"><input type="checkbox"' + (f.esclusi ? ' checked' : '') + ' onchange="filtri.esclusi=this.checked;aggiornaRisultati()"> mostra esclusi</label>' +
+    '</div>' +
     '<span class="commuta">' + ['lista', 'mappa', 'calendario'].map(function (m) {
       return '<button class="' + (f.modo === m ? 'attivo' : '') + '" onclick="filtri.modo=\'' + m + '\';disegna()">' + m[0].toUpperCase() + m.slice(1) + '</button>';
     }).join('') + '</span></div><div id="risultati"></div>';
@@ -336,7 +393,7 @@ function vistaPipeline() {
 
 function vistaCalendario() {
   var attivi = D.bandi.filter(function (b) { return (aperto(b) || b.Stato === 'Inviato') && !b.Esclusione; });
-  return '<div class="filtri"><button class="bottone" onclick="spostaMese(-1)">‹</button><button class="bottone" onclick="spostaMese(1)">›</button>' +
+  return '<div class="filtri">' + (eMobile() ? '' : '<button class="bottone" onclick="spostaMese(-1)">‹</button><button class="bottone" onclick="spostaMese(1)">›</button>') +
     '<button class="bottone" onclick="scaricaICS()">Esporta .ics per Google Calendar</button>' +
     '<span class="sotto">Bordo bianco: scadenza sicura · giallo: da verificare · blu: prossima azione</span></div>' + calendario(attivi);
 }
@@ -344,6 +401,35 @@ function vistaCalendario() {
 function spostaMese(n) { var d = new Date((meseCal || D.oggi.slice(0, 7)) + '-15'); d.setMonth(d.getMonth() + n); meseCal = d.toISOString().slice(0, 7); disegna(); }
 
 function calendario(bandi) {
+  return eMobile() ? agenda(bandi) : griglia(bandi);
+}
+
+function eventiPerGiorno(bandi) {
+  var eventi = {};
+  bandi.forEach(function (b) {
+    if (b.Scadenza) (eventi[b.Scadenza] = eventi[b.Scadenza] || []).push({ b: b, cls: b['Scadenza confermata'] === 'sicura' ? '' : 'dubbio', t: 'Scadenza: ' + b.Titolo });
+    if (b['Data prossima azione'] && b.Stato !== 'Nuovo') (eventi[b['Data prossima azione']] = eventi[b['Data prossima azione']] || []).push({ b: b, cls: 'attivita', t: '→ ' + b['Prossima azione'] + ': ' + b.Titolo });
+  });
+  return eventi;
+}
+
+/** Su telefono: elenco dei soli giorni del mese che hanno qualcosa. */
+function agenda(bandi) {
+  var mese = meseCal || D.oggi.slice(0, 7);
+  var nomeMese = new Date(mese + '-01T12:00:00').toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  var eventi = eventiPerGiorno(bandi);
+  var giorni = Object.keys(eventi).filter(function (g) { return g.slice(0, 7) === mese; }).sort();
+  return '<div class="filtri"><button class="bottone" onclick="spostaMese(-1)" aria-label="Mese precedente">‹</button>' +
+    '<h2 style="margin:0;flex:1;text-align:center">' + nomeMese + '</h2><button class="bottone" onclick="spostaMese(1)" aria-label="Mese successivo">›</button></div>' +
+    (giorni.length ? '<div class="agenda">' + giorni.map(function (g) {
+      var d = new Date(g + 'T12:00:00');
+      return '<div class="giorno-agenda' + (g === D.oggi ? ' oggi' : '') + '"><div class="data-agenda">' +
+        d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }) + (g === D.oggi ? ' · oggi' : '') + '</div>' +
+        eventi[g].map(function (e) { return '<span class="evento ' + e.cls + '" onclick="apriBando(\'' + e.b.ID + '\')">' + esc(e.t) + '</span>'; }).join('') + '</div>';
+    }).join('') + '</div>' : '<div class="vuoto">Nessuna scadenza in questo mese.</div>');
+}
+
+function griglia(bandi) {
   var mese = meseCal || D.oggi.slice(0, 7);
   var primo = new Date(mese + '-01T12:00:00');
   var nomeMese = primo.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
@@ -377,9 +463,9 @@ function vistaEnti() {
     var chiave = e.Nome.toLowerCase().split(/[–(]/)[0].trim();
     var suoi = D.bandi.filter(function (b) { return String(b.Ente).toLowerCase().indexOf(chiave) >= 0 || chiave.indexOf(String(b.Ente).toLowerCase()) >= 0 && b.Ente; });
     return '<tr><td><b>' + esc(e.Nome) + '</b><div class="sotto">' + esc([e.Tipo, e['Città'], e.Paese].filter(Boolean).join(' · ')) + '</div></td>' +
-      '<td>' + '★★★'.slice(0, 4 - (Number(e.Livello) || 3)) + '</td>' +
-      '<td>' + esc(e['Mesi call'] || '') + '</td><td>' + esc(e['Storico'] || '') + '</td>' +
-      '<td>' + (suoi.map(function (b) { return '<a href="#" onclick="apriBando(\'' + b.ID + '\');return false">' + esc(b.Titolo) + '</a> <span class="sotto">' + esc(b.Stato) + '</span>'; }).join('<br>') || '<span class="sotto">—</span>') + '</td>' +
+      '<td data-etichetta="Livello">' + '★★★'.slice(0, 4 - (Number(e.Livello) || 3)) + '</td>' +
+      '<td' + (e['Mesi call'] ? ' data-etichetta="Mesi call"' : '') + '>' + esc(e['Mesi call'] || '') + '</td><td' + (e['Storico'] ? ' data-etichetta="Storico"' : '') + '>' + esc(e['Storico'] || '') + '</td>' +
+      '<td data-etichetta="Bandi trovati">' + (suoi.map(function (b) { return '<a href="#" onclick="apriBando(\'' + b.ID + '\');return false">' + esc(b.Titolo) + '</a> <span class="sotto">' + esc(b.Stato) + '</span>'; }).join('<br>') || '<span class="sotto">—</span>') + '</td>' +
       '<td>' + (e.Sito ? '<a href="' + esc(e.Sito) + '" target="_blank" rel="noopener">sito</a>' : '') + '</td></tr>';
   }).join('');
   return '<h2>Enti, festival e fondazioni · ' + D.enti.length + '</h2><p class="sotto">I nomi noti alzano il punteggio "prestigio". Si aggiungono nella scheda ENTI del foglio.</p>' +
@@ -391,13 +477,13 @@ function vistaFonti() {
     var attiva = /^(sì|si|x|true|1)$/i.test(String(f.Attiva));
     var errori = Number(f['Errori consecutivi']) || 0;
     return '<tr><td><b>' + esc(f.Nome) + '</b><div class="sotto">' + esc(f.Connettore) + ' · ' + esc(f.Frequenza) + ' · ' + esc(f.Livello) + '</div></td>' +
-      '<td>' + esc(f['Ultima lettura'] || '—') + '</td>' +
-      '<td>' + (errori ? '<span class="etichetta rosso">' + errori + ' errori</span> ' : '') + '<span class="sotto">' + esc(f['Ultimo esito'] || '') + '</span></td>' +
-      '<td>' + esc(f['Bandi portati'] || 0) + '</td>' +
+      '<td data-etichetta="Ultima lettura">' + esc(f['Ultima lettura'] || '—') + '</td>' +
+      '<td data-etichetta="Esito">' + (errori ? '<span class="etichetta rosso">' + errori + ' errori</span> ' : '') + '<span class="sotto">' + esc(f['Ultimo esito'] || '') + '</span></td>' +
+      '<td data-etichetta="Bandi portati">' + esc(f['Bandi portati'] || 0) + '</td>' +
       '<td><button class="bottone piccolo" onclick="commutaFonte(\'' + f.ID + '\',' + !attiva + ')">' + (attiva ? 'attiva' : 'in pausa') + '</button></td></tr>';
   }).join('');
   var log = D.log.map(function (l) {
-    return '<tr><td>' + esc(l.Data) + '</td><td>' + esc(l['Tipo giro']) + '</td><td>' + esc(l['Fonti lette']) + '</td><td>' + esc(l['Bandi nuovi']) + '</td><td>' + esc(l['Bandi aggiornati']) + '</td><td class="sotto">' + esc(l['Fonti in errore']) + (l['Domini suggeriti'] ? '<br>Da valutare: ' + esc(l['Domini suggeriti']) : '') + '</td></tr>';
+    return '<tr><td><b>' + esc(l.Data) + '</b><span class="solo-mobile"> · ' + esc(l['Tipo giro']) + '</span></td><td class="solo-desktop">' + esc(l['Tipo giro']) + '</td><td data-etichetta="Fonti">' + esc(l['Fonti lette']) + '</td><td data-etichetta="Nuovi">' + esc(l['Bandi nuovi']) + '</td><td data-etichetta="Aggiornati">' + esc(l['Bandi aggiornati']) + '</td><td class="sotto">' + esc(l['Fonti in errore']) + (l['Domini suggeriti'] ? '<br>Da valutare: ' + esc(l['Domini suggeriti']) : '') + '</td></tr>';
   }).join('');
   return '<h2>Aggiungi una fonte</h2><div class="filtri">' +
     '<input type="text" id="fNome" placeholder="Nome"><input type="text" id="fUrl" placeholder="URL della pagina open call o del feed" style="flex:1 1 280px">' +
@@ -597,6 +683,12 @@ document.getElementById('nav').addEventListener('click', function (e) {
   if (e.target.dataset.vista) { vista = e.target.dataset.vista; chiudiPannello(); disegna(); }
 });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') chiudiPannello(); });
+var eraMobile = null;
+window.addEventListener('resize', function () {
+  var ora = eMobile();
+  if (D && eraMobile !== null && ora !== eraMobile && (vista === 'calendario' || (vista === 'esplora' && filtri.modo === 'calendario'))) disegna();
+  eraMobile = ora;
+});
 
 /* Fuori da Apps Script (anteprima locale) si usano dati d'esempio. */
 var DEMO = {
