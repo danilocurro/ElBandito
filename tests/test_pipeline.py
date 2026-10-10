@@ -115,3 +115,11 @@ def test_geocodifica_open_meteo(tmp_path):
     vuota = rete_finta({pipeline.GEOCODER: (200, "application/json", '{"results": []}')})
     assert pipeline.geocodifica(vuota, arch, "Nessunposto", "") is None
     assert arch.geo("Nessunposto") is None  # i fallimenti non si memorizzano: al prossimo giro si riprova
+
+
+def test_soglia_di_qualita_per_fonte(tmp_path, monkeypatch, scheda_mare):
+    fonte = dict(FONTE_RSS, Parametri="filtro=premio; minimo=99")
+    amb, foglio = prepara(tmp_path, monkeypatch, scheda_mare, [fonte])
+    res = pipeline.Giro("giornaliero", amb, foglio).esegui()
+    assert res.nuovi == 0 and res.sotto_soglia == 1
+    assert foglio.leggi("BANDI") == []

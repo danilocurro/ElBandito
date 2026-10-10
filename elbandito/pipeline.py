@@ -16,7 +16,7 @@ from datetime import timedelta
 from . import dedup, ricerca_ai
 from .archivio import Archivio, hash_testo
 from .config import Ambiente, Profilo, iso, oggi
-from .connettori import CONNETTORI, Pagina, da_link
+from .connettori import CONNETTORI, Pagina, da_link, parametri
 from .estrazione import DaEstrarre, Estrattore, SchedaVerificata, verifica_tutte
 from .foglio import FoglioBase, apri
 from .punteggio import valuta
@@ -37,6 +37,7 @@ class Resoconto:
     nuovi: int = 0
     aggiornati: int = 0
     in_coda: int = 0
+    sotto_soglia: int = 0
     domini: list[str] = field(default_factory=list)
     note: list[str] = field(default_factory=list)
     errori: list[str] = field(default_factory=list)
@@ -162,6 +163,8 @@ class Giro:
         self._id = prossimo_id(self.bandi)
         self._fonti_bandi: dict[str, int] = {}
         self.solo: set[str] | None = None  # ID di FONTI da leggere (giro mirato), ignorando la frequenza
+        self._minimi = {f["ID"]: int(m) for f in self.foglio.leggi("FONTI")
+                        if (m := parametri(f).get("minimo", "")).isdigit()}
 
     # --- singola pagina ---
     def elabora(self, pagina: Pagina) -> int:
@@ -195,6 +198,13 @@ class Giro:
         doppio = dedup.trova(riga, self.bandi + self.nuove)
         adesso = iso(oggi())
         if doppio is None:
+            # soglia di qualità per fonte (Parametri "minimo=55"): sotto, il bando non entra nel foglio
+            minimo = self._minimi.get(riga["Fonte"])
+            if minimo is not None:
+                _applica_esito(riga, v, self.profilo, self.enti)
+                if int(riga.get("Punteggio") or 0) < minimo or riga.get("Esclusione"):
+                    self.res.sotto_soglia += 1
+                    return False
             riga.update({
                 "ID": f"B{self._id:04d}", "Stato": "Nuovo", "Prossima azione": "Valutare",
                 "Data prossima azione": iso(oggi() + timedelta(days=3)),
@@ -346,6 +356,8 @@ class Giro:
             self.res.note.append(f"coordinate aggiunte a {n} bandi")
         if self.tipo == "settimanale":
             self.ricerca()
+        if self.res.sotto_soglia:
+            self.res.note.append(f"{self.res.sotto_soglia} bandi scartati sotto la soglia di qualità della fonte")
         self.scrivi(inizio)
         return self.res
 
