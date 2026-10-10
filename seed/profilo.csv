@@ -8,12 +8,13 @@ Base lat,44.4949,Latitudine della città di riferimento (la calcola `elbandito c
 Base lon,11.3426,Longitudine della città di riferimento
 Nazionalità,italiana,Per i bandi riservati a certe nazionalità
 Paese,Italia,Bandi in questo paese: 60% del punteggio geografico
-Regioni di residenza,Emilia-Romagna,"Per i bandi riservati ai residenti di una regione: se non corrisponde, il bando è escluso"
+Regioni di residenza,Emilia-Romagna,Regioni (o città) in cui risiedi: per i bandi riservati ai residenti
+Regioni con partner,,"Regioni dove hai partner residenti: i bandi per i residenti lì non sono esclusi, ma segnalati tra i rischi"
 Luoghi casa,"Emilia-Romagna, Bologna, Modena, Parma, Reggio Emilia, Ferrara, Ravenna, Rimini, Piacenza, Forlì, Cesena",Regione e città che consideri casa: 100% del punteggio geografico
 Etichetta casa,Emilia-Romagna,Come appare nelle motivazioni (es. 'Emilia-Romagna')
 Luoghi vicini,"Toscana, Veneto, Lombardia, Marche, Liguria, Firenze, Venezia, Milano",Regioni o città vicine: 80% del punteggio geografico
 Etichetta vicini,regioni vicine,Come appare nelle motivazioni
-Si candida come,persona,persona | persona e associazione | persona e partita IVA. Con 'persona' i bandi riservati agli enti sono esclusi
+Si candida come,persona,"persona | persona e associazione | persona e con ente capofila (università, associazione) | persona e partita IVA. Con 'persona' i bandi riservati agli enti sono esclusi"
 Lingue,"italiano, inglese",Lingue in cui sai scrivere una candidatura: un bando solo in altre lingue è escluso
 Quota massima,50,"Euro. Sopra questa soglia il bando è escluso; sotto, il punteggio 'costo' scende all'aumentare della quota"
 Giorni minimi preparazione,7,I bandi che scadono prima di questi giorni sono esclusi (non c'è tempo per prepararli)

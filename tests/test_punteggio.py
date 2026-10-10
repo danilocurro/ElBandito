@@ -133,3 +133,15 @@ def test_bandi_per_enti_con_partner(scheda_mare):
     con_associazione = Profilo(righe + [{"Campo": "Si candida come", "Valore": "persona e associazione"}])
     e = valuta(v(scheda_mare), con_associazione, enti())
     assert e.esclusione == "" and "ente proponente" in e.rischi
+
+
+def test_residenza_con_partner(scheda_mare):
+    from elbandito.config import Profilo
+
+    righe = [{"Campo": k, "Valore": v_} for k, v_ in profilo().valori.items()]
+    p = Profilo(righe + [{"Campo": "Regioni con partner", "Valore": "Lazio, Roma"}])
+    scheda_mare.residenza_richiesta = "residenti nel Lazio"
+    e = valuta(v(scheda_mare), p, enti())
+    assert e.esclusione == "" and "partner residente" in e.rischi
+    scheda_mare.residenza_richiesta = "residenti in Lombardia"
+    assert "Lombardia" in valuta(v(scheda_mare), p, enti()).esclusione

@@ -72,7 +72,8 @@ Metti nelle discipline anche i termini in inglese: molti bandi internazionali sc
 | --- | --- | --- |
 | `Base`, `Città di riferimento` | Mappa e distanze | `Bologna` |
 | `Base lat`, `Base lon` | Coordinate della città di riferimento | `44.4949`, `11.3426` |
-| `Regioni di residenza` | Filtro: bandi "riservati ai residenti in…" | `Emilia-Romagna` |
+| `Regioni di residenza` | Filtro: bandi "riservati ai residenti in…" (regioni o città) | `Emilia-Romagna` |
+| `Regioni con partner` | I bandi per residenti in queste regioni non sono esclusi ma segnalati: "serve un partner residente" | `Lazio, Roma` |
 | `Luoghi casa` + `Etichetta casa` | Punteggio: geografia al 100% | `Emilia-Romagna, Bologna, Modena, Parma` |
 | `Luoghi vicini` + `Etichetta vicini` | Punteggio: geografia all'80% | `Toscana, Veneto, Lombardia, Firenze` |
 | `Paese` | Punteggio: geografia al 60% | `Italia` |
@@ -84,7 +85,7 @@ Il resto del mondo vale il 20%, i bandi solo online il 50%, quelli senza luogo i
 
 | Campo | Effetto | Esempio |
 | --- | --- | --- |
-| `Si candida come` | Filtro: con `persona`, i bandi riservati a enti e imprese sono esclusi | `persona`, `persona e associazione` |
+| `Si candida come` | Filtro: con `persona`, i bandi riservati a enti e imprese sono esclusi. Se nomini un ente (associazione, università capofila, partita IVA) restano, segnalati con "serve un ente proponente" | `persona`, `persona e con ente capofila (università, associazione)` |
 | `Lingue` | Filtro: un bando solo in altre lingue è escluso | `italiano, inglese` |
 | `Quota massima` | Filtro sopra la soglia; sotto, il punteggio "costo" scende con la quota | `50` |
 | `Giorni minimi preparazione` | Filtro: scadenze troppo vicine | `7` |

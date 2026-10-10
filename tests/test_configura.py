@@ -11,7 +11,7 @@ from elbandito.foglio import apri
 def test_questionario_salva_profilo_e_copia_personale():
     risposte = iter([
         "illustrazione", "illustrazione, fumetto", "", "1985", "",           # chi sei
-        "Napoli", "", "", "Campania", "Campania, Napoli, Salerno", "Campania", "Lazio, Puglia",  # dove
+        "Napoli", "", "", "Campania", "", "Campania, Napoli, Salerno", "Campania", "Lazio, Puglia",  # dove
         "", "italiano, inglese, francese", "30", "", "",                       # come
         "mare, città, lavoro", "", "",                                        # lavoro
         "2",                                                                  # preset "conta il tema"

@@ -64,8 +64,9 @@ def filtri_rigidi(v: SchedaVerificata, profilo: Profilo) -> str:
     if s.nazionalita_ammesse and not any(APERTI.search(n) for n in s.nazionalita_ammesse):
         motivi.append(f"Nazionalità: {', '.join(s.nazionalita_ammesse)}")
     if s.residenza_richiesta:
-        miei = profilo.lista("Regioni di residenza") + profilo.lista("Base") + [profilo.testo("Paese")]
-        if not _contiene(s.residenza_richiesta, miei) and not APERTI.search(s.residenza_richiesta):
+        miei = profilo.lista("Regioni di residenza") + [profilo.testo("Paese")]
+        if (not _contiene(s.residenza_richiesta, miei) and not APERTI.search(s.residenza_richiesta)
+                and not _contiene(s.residenza_richiesta, profilo.lista("Regioni con partner"))):
             motivi.append(f"Richiede residenza: {s.residenza_richiesta}")
     if s.solo_enti and not con_ente(profilo):
         motivi.append("Riservato a enti, associazioni o imprese")
@@ -190,7 +191,10 @@ def valuta(v: SchedaVerificata, profilo: Profilo, enti: list[dict], n_fonti: int
     if s.lingue_candidatura and not _lingue_ok(s.lingue_candidatura, ["italiano"]):
         rischi.append(f"Candidatura in {', '.join(s.lingue_candidatura)}")
     if s.residenza_richiesta:
-        rischi.append(f"Residenza: {s.residenza_richiesta}")
+        partner = _contiene(s.residenza_richiesta, profilo.lista("Regioni con partner"))
+        mia = _contiene(s.residenza_richiesta, profilo.lista("Regioni di residenza"))
+        rischi.append(f"Residenza richiesta ({s.residenza_richiesta}): serve un partner residente"
+                      if partner and not mia else f"Residenza: {s.residenza_richiesta}")
     if s.solo_enti and con_ente(profilo):
         rischi.append("Serve un ente proponente (associazione, fondazione, partita IVA)")
     if s.date_attivita and s.tipo == "residenza":

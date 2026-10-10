@@ -90,6 +90,7 @@ PREDEFINITI = {
     "Nazionalità": "italiana",
     "Paese": "Italia",
     "Regioni di residenza": "Emilia-Romagna",
+    "Regioni con partner": "",
     "Luoghi casa": "Emilia-Romagna, Bologna",
     "Etichetta casa": "vicino a casa",
     "Luoghi vicini": "",
