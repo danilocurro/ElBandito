@@ -67,7 +67,7 @@ def filtri_rigidi(v: SchedaVerificata, profilo: Profilo) -> str:
         miei = profilo.lista("Regioni di residenza") + profilo.lista("Base") + [profilo.testo("Paese")]
         if not _contiene(s.residenza_richiesta, miei) and not APERTI.search(s.residenza_richiesta):
             motivi.append(f"Richiede residenza: {s.residenza_richiesta}")
-    if s.solo_enti and profilo.testo("Si candida come").lower().startswith("persona"):
+    if s.solo_enti and not con_ente(profilo):
         motivi.append("Riservato a enti, associazioni o imprese")
     massimo = profilo.numero("Quota massima", 50)
     if s.quota_iscrizione_eur and s.quota_iscrizione_eur > massimo:
@@ -79,6 +79,11 @@ def filtri_rigidi(v: SchedaVerificata, profilo: Profilo) -> str:
     if not _lingue_ok(s.lingue_candidatura, profilo.lista("Lingue")):
         motivi.append(f"Lingua di candidatura: {', '.join(s.lingue_candidatura)}")
     return "; ".join(motivi)
+
+
+def con_ente(profilo: Profilo) -> bool:
+    """Vero se ci si può candidare anche tramite un ente (associazione, fondazione, partita IVA, partner)."""
+    return bool(re.search(r"associazion|ente|fondazion|partita|iva|impresa|partner", profilo.testo("Si candida come").lower()))
 
 
 def _prestigio(ente: str, enti: list[dict]) -> tuple[float, str]:
@@ -186,6 +191,8 @@ def valuta(v: SchedaVerificata, profilo: Profilo, enti: list[dict], n_fonti: int
         rischi.append(f"Candidatura in {', '.join(s.lingue_candidatura)}")
     if s.residenza_richiesta:
         rischi.append(f"Residenza: {s.residenza_richiesta}")
+    if s.solo_enti and con_ente(profilo):
+        rischi.append("Serve un ente proponente (associazione, fondazione, partita IVA)")
     if s.date_attivita and s.tipo == "residenza":
         rischi.append(f"Presenza richiesta: {s.date_attivita}")
 

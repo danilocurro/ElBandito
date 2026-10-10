@@ -33,6 +33,8 @@ FILONI_PREDEFINITI = [
     "bandi pubblici in {paese} per {tema} contemporanea (ministero, regioni, fondazioni)",
     "residenze e premi sui temi {temi}",
     "fondi di mobilità e viaggio per artisti visivi (Culture Moves Europe e simili)",
+    "avvisi pubblici regionali e comunali per la valorizzazione del patrimonio culturale materiale e immateriale "
+    "che prevedono documentazione o progetti di {tema} (beni culturali, memoria, identità, paesaggio) in {casa}",
 ]
 
 

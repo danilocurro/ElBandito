@@ -10,31 +10,36 @@ F08,art a part of cult(ure),https://www.artapartofculture.net/feed/,rss,filtro=o
 F09,Res Artis – open calls,https://resartis.org/open-calls/,listing,pattern=/open-call/[^/]+/?$; max=15,giornaliera,Mondo,residenze,sì,,,0,0,,
 F10,On the Move – deadlines,https://on-the-move.org/news/deadlines,listing,pattern=/news/[^/]+$; max=15,giornaliera,UE,"mobilità, residenze, grant",sì,,,0,0,,
 F11,ArtRabbit – artist opportunities,https://www.artrabbit.com/artist-opportunities,listing,pattern=/artist-opportunities/.+; max=15,giornaliera,Mondo,open call,sì,,,0,0,,
-F12,ArtConnect – opportunities,https://www.artconnect.com/opportunities,listing,pattern=/opportunities/[^/?]+$; max=15,giornaliera,Mondo,"open call, premi",sì,,,0,0,,Ha JSON-LD
+F12,ArtConnect – opportunities,https://www.artconnect.com/opportunities,listing,pattern=/opportunity/[A-Za-z0-9_-]+$; max=15,giornaliera,Mondo,"open call, premi",sì,,,0,0,,Ha JSON-LD
 F13,GAI – Giovani Artisti Italiani,https://www.giovaniartisti.it/concorsi,listing,pattern=/concorsi/.+; max=10,settimanale,Italia,concorsi,sì,,,0,0,,Molti under 35
 F14,Residenze artistiche,https://www.residenzeartistiche.it/bandi/,listing,pattern=/bandi/.+; max=10,settimanale,Italia,residenze,sì,,,0,0,,Soprattutto arti performative
 F15,Regione Siciliana – Bandi,https://www.regione.sicilia.it/istituzioni/servizi-informativi/bandi,listing,filtro=cultur|arte|artist|fotograf|spettacolo|creativ; max=10,settimanale,Sicilia,bandi pubblici,sì,,,0,0,,
 F16,CaFÉ – Call for Entry,https://www.callforentry.org,listing,max=10,settimanale,USA/mondo,open call,no,,,0,0,,Secondario: molti bandi solo USA
-F17,Cortona On The Move,https://www.cortonaonthemove.com,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F18,Fotografia Europea,https://www.fotografiaeuropea.it,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F19,SI FEST,https://www.sifest.it,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F20,Festival della Fotografia Etica,https://www.festivaldellafotografiaetica.it,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F21,CAMERA – Centro Italiano per la Fotografia,https://camera.to,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
+F17,Cortona On The Move,https://www.cortonaonthemove.com/open-call/,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Pagina open call stabile
+F18,Fotografia Europea,https://www.fotografiaeuropea.it,listing,pattern=/(fe\d{4}-open-call|open-call|letture-portfolio|bando)[^/]*/?$; max=5,settimanale,IT/UE,"festival, premi",sì,,,0,0,,La pagina open call cambia ogni anno (fe2026-open-call): elenco dalla home
+F19,SI FEST,https://www.sifest.it,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Il Premio Marco Pesaresi sta nella home: si sorveglia la home
+F20,Festival della Fotografia Etica,https://www.festivaldellafotografiaetica.it,listing,pattern=/(world-report-award-regolamento|bando|letture-portfolio)[^/]*/?$; max=5,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Regolamento WRA e bandi cambiano ogni anno: elenco dalla home
+F21,CAMERA – Centro Italiano per la Fotografia,https://camera.to,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,"CAMERA non ha una pagina call: le sue call escono con partner (università, riviste)"
 F22,Premio Fabbri,https://www.premiofabbri.it,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F23,Futures Photography,https://www.futures-photography.com,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F24,PhotoIreland,https://photoireland.org,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
+F23,Futures Photography,https://www.futures-photography.com/residencies,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Residenze Futures
+F24,PhotoIreland,https://photoireland.org/news/cat/current-opportunities/,listing,pattern=/news/[^/]+/?$; max=10,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Opportunità correnti
 F25,World Press Photo – Contest,https://www.worldpressphoto.org/contest,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F26,Magnum Foundation,https://www.magnumfoundation.org,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F27,Arte Laguna Prize,https://www.artelagunaprize.com,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Fase 0: sostituire con l'URL esatto della pagina open call
-F28,Fondazione Sicilia,https://www.fondazionesicilia.it,watch,,settimanale,Sicilia,"bandi, residenze",sì,,,0,0,,Fase 0: puntare alla pagina bandi/avvisi
-F30,Farm Cultural Park,https://www.farmculturalpark.com,watch,,settimanale,Sicilia,"bandi, residenze",sì,,,0,0,,Fase 0: puntare alla pagina bandi/avvisi
-F31,Palermofoto,https://www.palermofoto.it,watch,,settimanale,Sicilia,"bandi, residenze",sì,,,0,0,,Fase 0: puntare alla pagina bandi/avvisi
-F32,Fondazione CRT,https://www.fondazionecrt.it,watch,,settimanale,Italia,"bandi, residenze",sì,,,0,0,,Fase 0: puntare alla pagina bandi/avvisi
-F33,SIAE – Per chi crea,https://perchicrea.siae.it,watch,,settimanale,Italia,"bandi, residenze",sì,,,0,0,,Fase 0: puntare alla pagina bandi/avvisi
-F34,Culture Moves Europe,https://culture.ec.europa.eu/creative-europe/creative-europe-culture-strand/culture-moves-europe,watch,,settimanale,UE,"bandi, residenze",sì,,,0,0,,Fase 0: puntare alla pagina bandi/avvisi
+F26,Magnum Foundation,https://www.magnumfoundation.org/opportunities,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Pagina opportunità
+F27,Arte Laguna Prize,https://www.artelagunaprize.com,watch,,settimanale,IT/UE,"festival, premi",sì,,,0,0,,Il bando in corso è in evidenza sulla home
+F28,Fondazione Sicilia,https://www.fondazionesicilia.it,watch,,settimanale,Sicilia,"bandi, residenze",no,,,0,0,,Il sito chiude la connessione ai programmi: si trova solo con la ricerca web
+F30,Farm Cultural Park,https://www.farmculturalpark.com,watch,,settimanale,Sicilia,"bandi, residenze",sì,,,0,0,,Le call di FARM escono spesso con partner (es. Italea Sicilia): si sorveglia la home
+F31,Palermofoto,https://www.palermofoto.it,listing,pattern=(artist_residency|portfolio_review|residency|open_call|call)[^/]*$; max=5,settimanale,Sicilia,"bandi, residenze",sì,,,0,0,,Residenze e letture portfolio
+F32,Fondazione CRT,https://www.fondazionecrt.it/progetti-e-bandi/,listing,pattern=/bandi-progetti/[^/]+/?$; filtro=arte|cultur|fotograf|artist|creativ|mostra|residenz; max=5,settimanale,Italia,"bandi, residenze",sì,,,0,0,,Solo bandi culturali
+F33,SIAE – Per chi crea,https://www.siae.it/it/per-chi-crea/,watch,,settimanale,Italia,"bandi, residenze",sì,,,0,0,,Indirizzo nuovo (perchicrea.siae.it non esiste più)
+F34,Culture Moves Europe,https://culture.ec.europa.eu/culture-moves-europe/home,watch,,settimanale,UE,"bandi, residenze",sì,,,0,0,,Indirizzo nuovo
 F35,LensCulture – competitions,https://www.lensculture.com/competitions,browser,,settimanale,Mondo,premi,no,,,0,0,,403 anti-bot alla prova del 7/10: resta alla ricerca AI
 F36,Fondazione Cariplo,https://www.fondazionecariplo.it,browser,,settimanale,Italia,bandi,no,,,0,0,,403 anti-bot alla prova del 7/10
 F37,TransArtists,https://www.transartists.org,browser,,settimanale,Mondo,residenze,no,,,0,0,,403: solo ricerca AI
-F38,Fondazione con il Sud,https://www.fondazioneconilsud.it,watch,,settimanale,Sud Italia,bandi,no,,,0,0,,URL cambiato (404): ritrovarlo alla Fase 0
-F39,MAST Photography Grant,https://www.mast.org,watch,,mensile,Italia,grant,no,,,0,0,,URL cambiato (404): ritrovarlo alla Fase 0
+F38,Fondazione con il Sud,https://www.fondazioneconilsud.it/bandi/,listing,pattern=/bandi/[^/]+/?$; filtro=cultur|artistic|film|arte|creativ|fotograf; max=5,settimanale,Sud Italia,bandi,sì,,,0,0,,Pagina bandi ritrovata; solo bandi culturali
+F39,MAST Photography Grant,https://mastphotogrant.com/,watch,,mensile,Italia,grant,sì,,,0,0,,"Sito dedicato al MAST Photography Grant (biennale, under 35)"
 F40,Ricerca AI settimanale,,ai_search,,settimanale,tutti,tutti,sì,,,0,0,,"Claude + ricerca web, il lunedì"
+F41,Regione Siciliana – Beni Culturali e Identità Siciliana,https://www.regione.sicilia.it/istituzioni/servizi-informativi/bandi?f%5B0%5D=group%3A16,listing,pattern=/servizi-informativi/bandi/[^/?]+$; filtro=avviso|bando|manifestazion|contribut|valorizz|cultur|iniziativ|art\.? ?10; max=10,settimanale,Sicilia,bandi pubblici,sì,,,0,0,,Aggiunta da ElBandito
+F42,Regione Siciliana – Dipartimento Beni Culturali (in primo piano),https://www.regione.sicilia.it/istituzioni/regione/strutture-regionali/assessorato-beni-culturali-identita-siciliana/dipartimento-beni-culturali-identita-siciliana,watch,,settimanale,Sicilia,bandi pubblici,sì,,,0,0,,Aggiunta da ElBandito
+F43,Regione Lazio – Bandi Cultura,https://progetti.regione.lazio.it/bandi-cultura/bandi/,listing,pattern=/bandi-cultura/bandi/[^/]+/?$; filtro=valorizz|patrimon|cultur|arte|fotograf|muse|archiv|luoghi|dimore|memoria; max=10,settimanale,Lazio,bandi pubblici,sì,,,0,0,,Aggiunta da ElBandito
+F44,LazioEuropa – Bandi,https://www.lazioeuropa.it/bandi/,listing,pattern=/bandi/[^/]+/?$; filtro=cultur|patrimon|arte|fotograf|muse|archiv|luoghi della cultura|valorizz|creativ; max=10,settimanale,Lazio,bandi pubblici,sì,,,0,0,,Aggiunta da ElBandito
+F45,PixContests – concorsi fotografici in scadenza,https://pixcontests.com/it/concorsi-fotografici-in-scadenza,listing,"pattern=^https://pixcontests\.com/[a-z0-9]+(-[a-z0-9]+){2,}/?$; max=15",settimanale,Mondo,concorsi fotografici,sì,,,0,0,,Aggiunta da ElBandito

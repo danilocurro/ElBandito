@@ -121,3 +121,15 @@ def test_importi_con_separatore_delle_migliaia():
 
     assert scheda_da_riga({"Titolo": "x", "Valore": "fino a 32.700 € e alloggio"}).valore_eur == 32700
     assert scheda_da_riga({"Titolo": "x", "Valore": "premio di 1.500,50 euro"}).valore_eur == 1500.5
+
+
+def test_bandi_per_enti_con_partner(scheda_mare):
+    from elbandito.config import Profilo
+
+    scheda_mare.solo_enti = True
+    solo_persona = profilo()
+    assert "enti" in valuta(v(scheda_mare), solo_persona, enti()).esclusione
+    righe = [{"Campo": k, "Valore": v_} for k, v_ in solo_persona.valori.items()]
+    con_associazione = Profilo(righe + [{"Campo": "Si candida come", "Valore": "persona e associazione"}])
+    e = valuta(v(scheda_mare), con_associazione, enti())
+    assert e.esclusione == "" and "ente proponente" in e.rischi

@@ -50,3 +50,9 @@ def test_scadenza_passata_si_scarta(scheda_mare):
     scheda_mare.scadenza = "15 gennaio 2026"
     scheda_mare.scadenza_citazione = ""
     assert verifica(scheda_mare, "testo qualsiasi") is None
+
+
+def test_scadenze_ricorrenti():
+    # avvisi annuali: "il 30 ottobre di ogni anno" vale come la prossima occorrenza
+    assert leggi_data("entro e non oltre il 30 ottobre di ogni anno") == date(2026, 10, 30)
+    assert leggi_data("March 1st every year") == date(2027, 3, 1)

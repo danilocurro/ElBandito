@@ -79,7 +79,8 @@ def leggi_data(testo: str, rif: date | None = None) -> date | None:
             return date.fromisoformat(m.group(0))
         except ValueError:
             pass
-    pulito = re.sub(r"(?i)\b(entro( il)?|scadenza|deadline|until|by|bis|avant le|ore|h\.?)\b", " ", testo)
+    pulito = re.sub(r"(?i)\b(di )?ogni anno\b|\bannualmente\b|\bevery year\b|\beach year\b", " ", testo)  # bandi ricorrenti
+    pulito = re.sub(r"(?i)\b(entro( e non oltre)?( il)?|non oltre( il)?|scadenza|deadline|until|by|bis|avant le|ore|h\.?)\b", " ", pulito)
     pulito = re.sub(r"(?i)\b\d{1,2}[:.]\d{2}\b.*$", "", pulito).strip(" :,-")
     d = dateparser.parse(
         pulito,
