@@ -171,7 +171,7 @@ def test_non_archivia_i_bandi_con_una_nota(tmp_path):
     f = FoglioLocale(tmp_path)
     f.prepara(con_seed=False)
     f.aggiungi("BANDI", [
-        {"ID": "B0001", "Titolo": "Curato", "Stato": "Nuovo", "Scadenza": "2026-08-17", "Note": "Sud e Magia · per la prossima edizione"},
+        {"ID": "B0001", "Titolo": "Curato", "Stato": "Nuovo", "Scadenza": "2026-08-17", "Note": "Mio progetto · per la prossima edizione"},
         {"ID": "B0002", "Titolo": "Vecchio", "Stato": "Nuovo", "Scadenza": "2026-08-17"},
     ])
     assert pipeline.archivia_scaduti(f, f.leggi("BANDI")) == 1

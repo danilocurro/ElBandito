@@ -172,7 +172,7 @@
   <nav id="nav">
     <button data-vista="oggi" class="attivo">Oggi</button>
     <button data-vista="esplora">Esplora</button>
-    <button data-vista="sudmagia">Sud e Magia</button>
+    <button data-vista="sudmagia" style="display:none"></button>
     <button data-vista="pipeline">Candidature</button>
     <button data-vista="calendario">Calendario</button>
     <button data-vista="impostazioni" title="Profilo, fonti ed enti">⚙ Impostazioni</button>
@@ -268,9 +268,14 @@ function avvisa(t, ms) { var m = document.getElementById('messaggio'); m.textCon
 function num(v) { var n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; }
 function aperto(b) { return STATI_APERTI.indexOf(b.Stato) >= 0; }
 
-/* Progetto "Sud e Magia": i bandi si segnano con una nota che inizia per "Sud e Magia" */
-var RE_SM = /^\s*sud e magia\s*[·:\-–]?\s*/i;
-function sudMagia(b) { return RE_SM.test(String(b.Note || '')); }
+/* Progetto speciale (campo "Progetto speciale" del profilo, vuoto = funzione spenta):
+   i bandi si segnano con una nota che inizia per il nome del progetto. */
+function nomeProgetto() { return String((D && D.profilo && D.profilo['Progetto speciale']) || '').trim(); }
+function reProgetto() {
+  var n = nomeProgetto();
+  return n ? new RegExp('^\\s*' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*[·:\\-–]?\\s*', 'i') : null;
+}
+function sudMagia(b) { var r = reProgetto(); return !!r && r.test(String(b.Note || '')); }
 
 function etichettaScadenza(b) {
   var g = giorniA(b.Scadenza);
@@ -285,7 +290,7 @@ function voce(b) {
   var quota = b['Quota iscrizione'] === '' ? '' : (num(b['Quota iscrizione']) === 0 ? 'gratis' : b['Quota iscrizione'] + ' €');
   return '<div class="voce' + (b.Esclusione ? ' esclusa' : '') + '" onclick="apriBando(\'' + b.ID + '\')">' +
     '<div class="punti">' + esc(b.Punteggio || '–') + '<small>punti</small></div>' +
-    '<div><div class="titolo">' + esc(b.Titolo) + (sudMagia(b) ? ' <span class="etichetta sm">Sud e Magia</span>' : '') + '</div>' +
+    '<div><div class="titolo">' + esc(b.Titolo) + (sudMagia(b) ? ' <span class="etichetta sm">' + esc(nomeProgetto()) + '</span>' : '') + '</div>' +
     '<div class="sotto">' + esc([b.Ente, b.Tipo, luogo, quota].filter(Boolean).join(' · ')) + '</div>' +
     (b.Esclusione ? '<div class="sotto" style="color:var(--rosso)">Escluso: ' + esc(b.Esclusione) + '</div>'
                   : (b.Motivazione ? '<div class="sotto">' + esc(b.Motivazione) + '</div>' : '')) + '</div>' +
@@ -328,6 +333,9 @@ function perScadenza(a, b) { return String(a.Scadenza || '9999').localeCompare(S
 
 /* ------------------------------------------------------------------ viste */
 function disegna() {
+  var tasto = document.querySelector('#nav button[data-vista="sudmagia"]');
+  if (tasto) { tasto.textContent = nomeProgetto(); tasto.style.display = nomeProgetto() ? '' : 'none'; }
+  if (vista === 'sudmagia' && !nomeProgetto()) vista = 'oggi';
   document.querySelectorAll('#nav button').forEach(function (b) { b.classList.toggle('attivo', b.dataset.vista === vista); });
   var el = document.getElementById('vista');
   if (mappa) { mappa.remove(); mappa = null; }
@@ -578,7 +586,7 @@ var SEZIONI_PROFILO = [
   ['Come ti candidi (filtri rigidi)', ['Si candida come', 'Lingue', 'Quota massima', 'Giorni minimi preparazione', 'Disponibilità fuori casa (settimane)']],
   ['Il tuo lavoro', ['Temi', 'Curriculum', 'Parole chiave']],
   ['Pesi del punteggio', ['Peso disciplina', 'Peso tema', 'Peso geografia', 'Peso valore', 'Peso prestigio', 'Peso costo', 'Soglia avviso']],
-  ['Motori, modelli e link', ['Link app', 'Motore estrazione', 'Motore ricerca', 'Modello estrazione', 'Modello ripiego', 'Modello ricerca', 'Ricerche settimanali', 'Filoni ricerca']]
+  ['Motori, modelli e link', ['Link app', 'Progetto speciale', 'Motore estrazione', 'Motore ricerca', 'Modello estrazione', 'Modello ripiego', 'Modello ricerca', 'Ricerche settimanali', 'Filoni ricerca']]
 ];
 var PRESET_PESI = {
   'equilibrato':    [25, 5, 10, 15, 15, 15],
@@ -636,8 +644,9 @@ function vistaSudMagia() {
   var vicini = resto.filter(function (b) { var g = giorniA(b.Scadenza); return g !== null && g >= 0 && g <= 60; }).sort(perScadenza);
   var senza = resto.filter(function (b) { return !b.Scadenza; });
   var monitorare = resto.filter(function (b) { return vicini.indexOf(b) < 0 && senza.indexOf(b) < 0; }).sort(perScadenza);
-  return '<h2>Sud e Magia · ' + tutti.length + ' bandi</h2>' +
-    '<p class="sotto">Bandi legati al progetto su credenze popolari, folklore e magia. Restano anche nelle altre viste. Per aggiungerne o toglierne uno usa il bottone nella sua scheda.</p>' +
+  var nome = esc(nomeProgetto());
+  return '<h2>' + nome + ' · ' + tutti.length + ' bandi</h2>' +
+    '<p class="sotto">Bandi che hai segnato per il progetto «' + nome + '». Restano anche nelle altre viste. Per aggiungerne o toglierne uno usa il bottone nella sua scheda.</p>' +
     (inCorso.length ? '<div class="gruppo"><span>In lavorazione · ' + inCorso.length + '</span></div>' + elenco(inCorso) : '') +
     '<div class="gruppo"><span>Scadono entro 60 giorni · ' + vicini.length + '</span></div>' + elenco(vicini, 'Nessuna scadenza vicina.') +
     '<div class="gruppo"><span>Ricorrenti e prossime edizioni · ' + monitorare.length + '</span></div>' + elenco(monitorare, 'Niente da monitorare.') +
@@ -647,8 +656,8 @@ function vistaSudMagia() {
 function cambiaSudMagia(id) {
   var b = D.indice[id]; if (!b) return;
   var nota = String(b.Note || '');
-  var nuova = sudMagia(b) ? nota.replace(RE_SM, '') : 'Sud e Magia · ' + nota;
-  chiama('salvaNote', id, nuova).then(function (j) { carica(j); avvisa(sudMagia(D.indice[id]) ? 'Aggiunto a Sud e Magia' : 'Tolto da Sud e Magia'); });
+  var nuova = sudMagia(b) ? nota.replace(reProgetto(), '') : nomeProgetto() + ' · ' + nota;
+  chiama('salvaNote', id, nuova).then(function (j) { carica(j); avvisa(sudMagia(D.indice[id]) ? 'Aggiunto a ' + nomeProgetto() : 'Tolto da ' + nomeProgetto()); });
 }
 
 /* ------------------------------------------------------------------ scheda bando */
@@ -695,7 +704,7 @@ function apriBando(id) {
       (b['Scadenza confermata'] !== 'sicura' ? '<input type="date" id="dataConferma" value="' + esc(b.Scadenza) + '"><button class="bottone" onclick="chiama(\'confermaScadenza\',\'' + id + '\',document.getElementById(\'dataConferma\').value).then(function(j){carica(j);avvisa(\'Scadenza confermata\')})">Confermo la data</button>' : '') + '</div>' +
     '<h2>Azioni</h2><div class="riga-azioni">' + azioni.map(function (a) {
       return '<button class="bottone' + (a[2] ? ' pieno' : '') + '" onclick="azione(\'' + id + '\',\'' + a[0] + '\')">' + a[1] + '</button>';
-    }).join('') + '<button class="bottone" onclick="cambiaSudMagia(\'' + id + '\')">' + (sudMagia(b) ? '★ Togli da Sud e Magia' : '☆ Aggiungi a Sud e Magia') + '</button></div>' +
+    }).join('') + (nomeProgetto() ? '<button class="bottone" onclick="cambiaSudMagia(\'' + id + '\')">' + (sudMagia(b) ? '★ Togli da ' : '☆ Aggiungi a ') + esc(nomeProgetto()) + '</button>' : '') + '</div>' +
     (c ? '<h2>Checklist materiali</h2><div class="checklist">' + c.Checklist.map(function (v, i) {
       return '<label><input type="checkbox"' + (v.fatto ? ' checked' : '') + ' onchange="spunta(\'' + id + '\',' + i + ',this.checked)"> ' + esc(v.voce) + '</label>';
     }).join('') + '</div><div class="filtri" style="margin-top:8px"><input type="text" id="nuovaVoce" placeholder="Aggiungi voce"><button class="bottone piccolo" onclick="aggiungiVoce(\'' + id + '\')">+</button>' +
