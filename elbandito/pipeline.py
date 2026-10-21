@@ -24,6 +24,9 @@ from .rete import AccessoNegato, Rete
 
 log = logging.getLogger(__name__)
 
+SCADUTO = re.compile(r"\b(scadut[aoie]|termine scaduto|bando chiuso|candidature chiuse|expired|deadline passed|applications? (?:are |is )?closed|call (?:is )?closed)\b", re.I)
+GIORNI_SENZA_DATA = 30  # un bando "Nuovo" senza scadenza e mai guardato per un mese si archivia
+
 STATI_CHIUSI = {"Scartato", "Archiviato", "Vinto", "Non selezionato"}
 
 
@@ -170,12 +173,18 @@ def archivia_scaduti(foglio: FoglioBase, bandi: list[dict], modifiche: dict | No
             continue
         scad = str(b.get("Scadenza") or "")
         motivo = ""
+        testo = f"{b.get('Estratto', '')} {b.get('Valore', '')}"
         if scad and scad < adesso:
             motivo = f"scaduto il {scad}"
+        elif SCADUTO.search(testo):
+            motivo = "il testo dice che è scaduto o chiuso"
         elif not scad:
             date_citate = cerca_date(b.get("Estratto", ""))
+            trovato = str(b.get("Trovato il") or adesso)
             if date_citate and max(date_citate) < oggi():
                 motivo = f"scaduto (ultima data citata {iso(max(date_citate))})"
+            elif trovato <= iso(oggi() - timedelta(days=GIORNI_SENZA_DATA)):
+                motivo = f"senza scadenza da oltre {GIORNI_SENZA_DATA} giorni"
         if motivo:
             campi = {"Stato": "Archiviato", "Prossima azione": "", "Data prossima azione": "",
                      "Storico": (str(b.get("Storico", "")) + f"\n{adesso} archiviato: {motivo}").strip()}

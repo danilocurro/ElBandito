@@ -76,10 +76,49 @@ function aggiungi_(nome, oggetto) {
   sh.appendRow(intest.map(function (k) { return oggetto[k] === undefined ? '' : oggetto[k]; }));
 }
 
+/** Trova una riga per valore di colonna senza leggere tutto il foglio. */
+function trovaRiga_(nome, colonna, valore) {
+  var sh = foglio_().getSheetByName(nome);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var intest = intestazioni_(sh);
+  var j = intest.indexOf(colonna);
+  if (j < 0) return null;
+  var t = sh.getRange(2, j + 1, sh.getLastRow() - 1, 1).createTextFinder(String(valore)).matchEntireCell(true).matchCase(true).findNext();
+  if (!t) return null;
+  var v = sh.getRange(t.getRow(), 1, 1, intest.length).getValues()[0];
+  var o = { _riga: t.getRow() };
+  for (var i = 0; i < intest.length; i++) o[intest[i]] = cella_(v[i]);
+  return o;
+}
+
 function trovaBando_(id) {
-  var b = leggi_('BANDI').filter(function (r) { return r.ID === id; })[0];
+  var b = trovaRiga_('BANDI', 'ID', id);
   if (!b) throw new Error('Bando non trovato: ' + id);
   return b;
+}
+
+/** Una sola scrittura alla volta: se si preme due volte un pulsante, la seconda aspetta la prima. */
+function conBlocco_(fn) {
+  var lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+
+function preparaBando_(b) {
+  try { b['Dettaglio punteggio'] = b['Dettaglio punteggio'] ? JSON.parse(b['Dettaglio punteggio']) : {}; }
+  catch (e) { b['Dettaglio punteggio'] = {}; }
+  return b;
+}
+
+function preparaCandidatura_(c) {
+  if (!c) return null;
+  try { c.Checklist = c.Checklist ? JSON.parse(c.Checklist) : []; } catch (e) { c.Checklist = []; }
+  return c;
+}
+
+/** Risposta leggera dopo una modifica: solo il bando (e la candidatura) cambiati, non tutto il foglio. */
+function esito_(id) {
+  return JSON.stringify({ delta: { bando: preparaBando_(trovaBando_(id)), candidatura: preparaCandidatura_(trovaRiga_('CANDIDATURE', 'ID bando', id)) } });
 }
 
 function piuGiorni_(iso, n) {
@@ -96,15 +135,9 @@ function getBandi() {
   var profilo = {}, profiloNote = {};
   leggi_('PROFILO').forEach(function (r) { profilo[r.Campo] = r.Valore; profiloNote[r.Campo] = r.Note || ''; });
   var bandi = leggi_('BANDI').filter(function (b) { return b.Stato !== 'Archiviato'; });
-  bandi.forEach(function (b) {
-    try { b['Dettaglio punteggio'] = b['Dettaglio punteggio'] ? JSON.parse(b['Dettaglio punteggio']) : {}; }
-    catch (e) { b['Dettaglio punteggio'] = {}; }
-  });
+  bandi.forEach(preparaBando_);
   var candidature = {};
-  leggi_('CANDIDATURE').forEach(function (c) {
-    try { c.Checklist = c.Checklist ? JSON.parse(c.Checklist) : []; } catch (e) { c.Checklist = []; }
-    candidature[c['ID bando']] = c;
-  });
+  leggi_('CANDIDATURE').forEach(function (c) { candidature[c['ID bando']] = preparaCandidatura_(c); });
   return JSON.stringify({
     oggi: oggi_(),
     bandi: bandi,
@@ -126,6 +159,10 @@ function getBandi() {
  * extra: { dataEsito, nota }
  */
 function registraAzione(id, azione, extra) {
+  return conBlocco_(function () { return registraAzione_(id, azione, extra); });
+}
+
+function registraAzione_(id, azione, extra) {
   extra = extra || {};
   var b = trovaBando_(id);
   var scad = b.Scadenza;
@@ -155,7 +192,7 @@ function registraAzione(id, azione, extra) {
     var c = assicuraCandidatura_(b);
     scrivi_('CANDIDATURE', c._riga, campi);
   }
-  return getBandi();
+  return esito_(id);
 }
 
 function aperturaStimata_(b) {
@@ -164,7 +201,7 @@ function aperturaStimata_(b) {
 }
 
 function assicuraCandidatura_(b) {
-  var c = leggi_('CANDIDATURE').filter(function (r) { return r['ID bando'] === b.ID; })[0];
+  var c = trovaRiga_('CANDIDATURE', 'ID bando', b.ID);
   if (c) return c;
   var voci = String(b['Materiali richiesti'] || '').split(/[;\n]/).map(function (s) { return s.trim(); })
     .filter(String).map(function (s) { return { voce: s, fatto: false }; });
@@ -172,37 +209,49 @@ function assicuraCandidatura_(b) {
   aggiungi_('CANDIDATURE', {
     'ID bando': b.ID, 'Titolo': b.Titolo, 'Checklist': JSON.stringify(voci), 'Aggiornato il': oggi_()
   });
-  return leggi_('CANDIDATURE').filter(function (r) { return r['ID bando'] === b.ID; })[0];
+  return trovaRiga_('CANDIDATURE', 'ID bando', b.ID);
 }
 
 function salvaChecklist(id, checklist, cartella) {
+  return conBlocco_(function () {
+  
   var c = assicuraCandidatura_(trovaBando_(id));
   var campi = { 'Checklist': JSON.stringify(checklist), 'Aggiornato il': oggi_() };
   if (cartella !== undefined) campi['Cartella'] = cartella;
   scrivi_('CANDIDATURE', c._riga, campi);
-  return getBandi();
+  return esito_(id);
+  });
 }
 
 function salvaFeedback(id, feedback) {
+  return conBlocco_(function () {
+  
   var c = assicuraCandidatura_(trovaBando_(id));
   scrivi_('CANDIDATURE', c._riga, { 'Feedback': feedback, 'Aggiornato il': oggi_() });
-  return getBandi();
+  return esito_(id);
+  });
 }
 
 function salvaNote(id, note) {
+  return conBlocco_(function () {
+  
   var b = trovaBando_(id);
   scrivi_('BANDI', b._riga, { 'Note': note, 'Aggiornato il': oggi_() });
-  return getBandi();
+  return esito_(id);
+  });
 }
 
 /** La scadenza estratta dall'AI entra nei promemoria solo dopo questa conferma. */
 function confermaScadenza(id, data) {
+  return conBlocco_(function () {
+  
   var b = trovaBando_(id);
   scrivi_('BANDI', b._riga, {
     'Scadenza': data || b.Scadenza, 'Scadenza confermata': 'sicura', 'Aggiornato il': oggi_(),
     'Storico': (b.Storico ? b.Storico + '\n' : '') + oggi_() + ' scadenza confermata a mano'
   });
-  return getBandi();
+  return esito_(id);
+  });
 }
 
 function aggiornaFonte(id, campi) {

@@ -35,6 +35,8 @@ Regole:
 - Estrai SOLO opportunità a cui un artista può candidarsi. Se la pagina è una notizia, una recensione \
 o l'annuncio dei vincitori, restituisci "bandi": [].
 - Una pagina può contenerne più d'una (rubriche, elenchi): una scheda per opportunità.
+- Se il testo dice che il bando è già scaduto, chiuso o concluso (anche "edizione scaduta il…"), non estrarlo.
+- Per bandi ricorrenti con più finestre l'anno ("1-28 febbraio e 1-31 agosto"), scadenza = la prossima finestra futura.
 - Non inventare nulla. Un campo che il testo non dice resta vuoto (o null).
 - Per scadenza, quota ed eleggibilità copia nei campi *_citazione la frase ESATTA del testo, \
 carattere per carattere, da cui ricavi il dato. Se non c'è una frase, lascia vuoti dato e citazione.

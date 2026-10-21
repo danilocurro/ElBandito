@@ -149,3 +149,17 @@ def test_pagina_scheda_tiene_solo_il_bando_principale(scheda_mare):
     correlato = SchedaVerificata(scheda_mare.model_copy(update={"titolo": "Anna Cornelis Fund Grant"}), None, False, "")
     pagina = Pagina(url="https://pixcontests.com/polverigi-2026-photo-contest", titolo="Polverigi 2026 Photo Contest", testo="", fonte="F45")
     assert pipeline.solo_principale([correlato, giusto], pagina) is giusto
+
+
+def test_archivia_testo_scaduto_e_senza_data_vecchi(tmp_path):
+    from elbandito.foglio import FoglioLocale
+
+    f = FoglioLocale(tmp_path)
+    f.prepara(con_seed=False)
+    f.aggiungi("BANDI", [
+        {"ID": "B0001", "Titolo": "A", "Stato": "Nuovo", "Scadenza": "2027-09-30", "Estratto": "Edizione 2026-27 scaduta il 30/09/2026.", "Trovato il": "2026-10-01"},
+        {"ID": "B0002", "Titolo": "B", "Stato": "Nuovo", "Trovato il": "2026-08-01"},
+        {"ID": "B0003", "Titolo": "C", "Stato": "Nuovo", "Trovato il": "2026-10-05"},
+    ])
+    assert pipeline.archivia_scaduti(f, f.leggi("BANDI")) == 2
+    assert {b["ID"]: b["Stato"] for b in f.leggi("BANDI")} == {"B0001": "Archiviato", "B0002": "Archiviato", "B0003": "Nuovo"}

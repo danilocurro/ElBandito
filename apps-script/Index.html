@@ -55,6 +55,7 @@
   .gruppo { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 6px; font-size: 13px; font-weight: 600; color: var(--testo); }
   .gruppo:first-child { margin-top: 4px; }
   .gruppo a { color: var(--tenue); font-weight: 400; font-size: 12px; }
+  body.occupato .bottone, body.occupato .voce, body.occupato .carta { pointer-events: none; opacity: .6; }
   .vuoto { color: var(--tenue); padding: 14px; background: var(--carbone); border: 1px solid var(--linea); }
 
   .filtri { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
@@ -198,15 +199,27 @@ var mappa = null;
 var STATI_APERTI = ['Nuovo', 'Da preparare', 'Pronto'];
 
 /* ------------------------------------------------------------------ server */
-/** chiama('nomeFunzione', arg1, arg2…) → Promise, come nel gestionale. */
 /* Tre backend, stessa interfaccia: Apps Script (google.script.run), dashboard locale
    (POST /api/<nome>, comando "elbandito dashboard") e dati d'esempio (?demo o file aperto da disco). */
 var MODO = (typeof google !== 'undefined' && google.script) ? 'appsscript'
          : (location.protocol === 'file:' || /[?&]demo\b/.test(location.search)) ? 'demo' : 'locale';
+var inVolo = {}, occupati = 0;
+function occupato(n) {
+  occupati = Math.max(0, occupati + n);
+  document.body.classList.toggle('occupato', occupati > 0);
+  var m = document.getElementById('messaggio');
+  if (occupati > 0) { clearTimeout(avvisa.t); m.textContent = 'Salvo… può volerci qualche secondo'; m.style.display = 'block'; }
+  else if (m.textContent.indexOf('Salvo') === 0) m.style.display = 'none';
+}
+/** chiama('nomeFunzione', arg1, arg2…) → Promise. Una stessa richiesta non parte due volte mentre è in corso. */
 function chiama(nome) {
   var args = Array.prototype.slice.call(arguments, 1);
-  return new Promise(function (ok, ko) {
-    var errore = function (e) { avvisa('Errore: ' + (e.message || e)); ko(e); };
+  var chiave = nome + JSON.stringify(args);
+  if (inVolo[chiave]) return inVolo[chiave];
+  var scrive = nome !== 'getBandi' && nome !== 'esportaICS' && nome !== 'assistente';
+  if (scrive) occupato(1);
+  var p = new Promise(function (ok, ko) {
+    var errore = function (e) { avvisa('Errore: ' + (e.message || e) + ' — riprova', 9000); ko(e); };
     if (MODO === 'appsscript') { google.script.run.withSuccessHandler(ok).withFailureHandler(errore)[nome].apply(null, args); return; }
     if (MODO === 'demo') { ok(DEMO.risposta(nome, args)); return; }
     fetch('api/' + nome, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(args) })
@@ -214,12 +227,32 @@ function chiama(nome) {
       .then(function (j) { if ('ok' in j) ok(j.ok); else errore(new Error(j.errore || 'risposta non valida')); })
       .catch(function () { MODO = 'demo'; avvisa('Server locale non raggiungibile: mostro i dati d\'esempio'); ok(DEMO.risposta(nome, args)); });
   });
+  inVolo[chiave] = p;
+  var fine = function () { delete inVolo[chiave]; if (scrive) occupato(-1); };
+  p.then(fine, fine);
+  return p;
 }
 
 function carica(json) {
-  D = typeof json === 'string' ? JSON.parse(json) : json;
+  var r = typeof json === 'string' ? JSON.parse(json) : json;
+  if (r && r.delta) { unisci(r.delta); return; }
+  D = r;
   D.indice = {};
   D.bandi.forEach(function (b) { D.indice[b.ID] = b; });
+  disegna();
+  var aperto = document.getElementById('pannello').dataset.id;
+  if (aperto && D.indice[aperto]) apriBando(aperto);
+}
+
+/** Aggiorna un solo bando (e la sua candidatura) senza ricaricare tutto. */
+function unisci(d) {
+  var b = d.bando;
+  if (b) {
+    var i = D.bandi.findIndex(function (x) { return x.ID === b.ID; });
+    if (b.Stato === 'Archiviato') { if (i >= 0) D.bandi.splice(i, 1); delete D.indice[b.ID]; }
+    else { if (i >= 0) D.bandi[i] = b; else D.bandi.push(b); D.indice[b.ID] = b; }
+  }
+  if (d.candidatura) D.candidature[d.candidatura['ID bando']] = d.candidatura;
   disegna();
   var aperto = document.getElementById('pannello').dataset.id;
   if (aperto && D.indice[aperto]) apriBando(aperto);
@@ -230,7 +263,7 @@ function esc(s) { return String(s === undefined || s === null ? '' : s).replace(
 function giorniA(iso) { if (!iso) return null; return Math.round((new Date(iso + 'T12:00:00') - new Date(D.oggi + 'T12:00:00')) / 864e5); }
 function piuGiorni(iso, n) { var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 function dataBreve(iso) { if (!iso) return '—'; var p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0].slice(2); }
-function avvisa(t) { var m = document.getElementById('messaggio'); m.textContent = t; m.style.display = 'block'; clearTimeout(avvisa.t); avvisa.t = setTimeout(function () { m.style.display = 'none'; }, 3500); }
+function avvisa(t, ms) { var m = document.getElementById('messaggio'); m.textContent = t; m.style.display = 'block'; clearTimeout(avvisa.t); avvisa.t = setTimeout(function () { m.style.display = 'none'; }, ms || 3500); }
 function num(v) { var n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; }
 function aperto(b) { return STATI_APERTI.indexOf(b.Stato) >= 0; }
 
@@ -654,10 +687,23 @@ function chiudiPannello() {
   document.getElementById('velo').classList.remove('aperto');
 }
 
+var STATO_DOPO = { interessa: 'Da preparare', scarta: 'Scartato', pronto: 'Pronto', inviato: 'Inviato', vinto: 'Vinto',
+  non_selezionato: 'Non selezionato', prossimo_anno: 'In attesa edizione', riapri: 'Nuovo', archivia: 'Archiviato' };
+
 function azione(id, nome) {
   var extra = {};
   if (nome === 'inviato') { var d = prompt("Data dell'esito, se nota (aaaa-mm-gg). Lascia vuoto se non si sa:", ''); if (d === null) return; extra.dataEsito = d; }
-  chiama('registraAzione', id, nome, extra).then(function (j) { carica(j); avvisa('Fatto'); });
+  var b = D.indice[id];
+  if (!b || occupati > 0) { if (occupati > 0) avvisa('Un attimo: sto ancora salvando'); return; }
+  var prima = JSON.parse(JSON.stringify(b));
+  // subito: la lista si aggiorna e il pannello si chiude, il server conferma dopo
+  b.Stato = STATO_DOPO[nome] || b.Stato;
+  if (['scarta', 'archivia', 'prossimo_anno'].indexOf(nome) >= 0) chiudiPannello();
+  disegna();
+  chiama('registraAzione', id, nome, extra).then(function (j) { carica(j); avvisa('Fatto'); }).catch(function () {
+    D.indice[id] = prima; var i = D.bandi.findIndex(function (x) { return x.ID === id; }); if (i >= 0) D.bandi[i] = prima;
+    disegna();
+  });
 }
 
 function spunta(id, i, fatto) {
