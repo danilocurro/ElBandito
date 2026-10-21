@@ -169,8 +169,8 @@ def archivia_scaduti(foglio: FoglioBase, bandi: list[dict], modifiche: dict | No
     proprie = modifiche is None
     modifiche = {} if proprie else modifiche
     for b in bandi:
-        if b.get("Stato") != "Nuovo":
-            continue
+        if b.get("Stato") != "Nuovo" or str(b.get("Note") or "").strip():
+            continue  # un bando con una nota è curato dall'utente (es. Sud e Magia): non si archivia da soli
         scad = str(b.get("Scadenza") or "")
         motivo = ""
         testo = f"{b.get('Estratto', '')} {b.get('Valore', '')}"

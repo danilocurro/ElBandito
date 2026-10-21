@@ -163,3 +163,16 @@ def test_archivia_testo_scaduto_e_senza_data_vecchi(tmp_path):
     ])
     assert pipeline.archivia_scaduti(f, f.leggi("BANDI")) == 2
     assert {b["ID"]: b["Stato"] for b in f.leggi("BANDI")} == {"B0001": "Archiviato", "B0002": "Archiviato", "B0003": "Nuovo"}
+
+
+def test_non_archivia_i_bandi_con_una_nota(tmp_path):
+    from elbandito.foglio import FoglioLocale
+
+    f = FoglioLocale(tmp_path)
+    f.prepara(con_seed=False)
+    f.aggiungi("BANDI", [
+        {"ID": "B0001", "Titolo": "Curato", "Stato": "Nuovo", "Scadenza": "2026-08-17", "Note": "Sud e Magia · per la prossima edizione"},
+        {"ID": "B0002", "Titolo": "Vecchio", "Stato": "Nuovo", "Scadenza": "2026-08-17"},
+    ])
+    assert pipeline.archivia_scaduti(f, f.leggi("BANDI")) == 1
+    assert {b["ID"]: b["Stato"] for b in f.leggi("BANDI")} == {"B0001": "Nuovo", "B0002": "Archiviato"}
