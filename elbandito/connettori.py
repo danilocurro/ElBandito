@@ -250,6 +250,7 @@ def listing(fonte: dict, rete: Rete, arch: Archivio, profilo: Profilo) -> list[P
     pagine = []
     for url in [u for u in link if arch.nuovo(u)][: int(p.get("max", 15))]:
         if pagina := _apri_o_salta(rete, url, fonte["ID"]):
+            pagina.strutturato["dettaglio"] = True  # scheda di un solo bando: i "correlati" in pagina non contano
             pagine.append(pagina)
     return pagine
 

@@ -146,6 +146,73 @@ def completa_coordinate(g: "Giro", massimo: int = 60) -> int:
     return fatti
 
 
+def solo_principale(verificate: list[SchedaVerificata], pagina: Pagina) -> SchedaVerificata:
+    """Su una pagina-scheda (es. PixContests) il bando giusto è quello col titolo più simile alla pagina."""
+    from rapidfuzz import fuzz
+
+    rif = dedup.normalizza(pagina.titolo + " " + pagina.url.rsplit("/", 1)[-1].replace("-", " "))
+    return max(verificate, key=lambda v: fuzz.token_set_ratio(dedup.normalizza(v.scheda.titolo), rif))
+
+
+def archivia_scaduti(foglio: FoglioBase, bandi: list[dict], modifiche: dict | None = None) -> int:
+    """Archivia i bandi ancora da valutare (Nuovo) la cui scadenza è passata.
+
+    Quelli che l'utente sta preparando o ha inviato non si toccano: decide lui.
+    Senza scadenza, se tutte le date citate nell'estratto sono passate, il bando è vecchio.
+    """
+    from .estrazione import cerca_date
+
+    adesso = iso(oggi())
+    proprie = modifiche is None
+    modifiche = {} if proprie else modifiche
+    for b in bandi:
+        if b.get("Stato") != "Nuovo":
+            continue
+        scad = str(b.get("Scadenza") or "")
+        motivo = ""
+        if scad and scad < adesso:
+            motivo = f"scaduto il {scad}"
+        elif not scad:
+            date_citate = cerca_date(b.get("Estratto", ""))
+            if date_citate and max(date_citate) < oggi():
+                motivo = f"scaduto (ultima data citata {iso(max(date_citate))})"
+        if motivo:
+            campi = {"Stato": "Archiviato", "Prossima azione": "", "Data prossima azione": "",
+                     "Storico": (str(b.get("Storico", "")) + f"\n{adesso} archiviato: {motivo}").strip()}
+            b.update(campi)
+            modifiche.setdefault(b["ID"], {}).update(campi)
+    if proprie and modifiche:
+        foglio.aggiorna("BANDI", "ID", modifiche)
+    return sum(1 for m in modifiche.values() if m.get("Stato") == "Archiviato")
+
+
+def link_incoerenti(bandi: list[dict], fonti_dettaglio: set[str]) -> list[str]:
+    """ID dei bandi presi da pagine-scheda il cui titolo non c'entra con l'indirizzo (i "correlati")."""
+    from rapidfuzz import fuzz
+
+    out = []
+    for b in bandi:
+        if b.get("Stato") != "Nuovo" or b.get("Fonte", "").strip() not in fonti_dettaglio:
+            continue
+        slug = dedup.normalizza(b.get("Link bando", "").rstrip("/").rsplit("/", 1)[-1].replace("-", " "))
+        if slug and fuzz.token_set_ratio(dedup.normalizza(b.get("Titolo", "")), slug) < 50:
+            out.append(b["ID"])
+    return out
+
+
+def pulizia(foglio: FoglioBase) -> dict:
+    """Ripulisce un foglio: bandi scaduti e bandi "correlati" con il link di un altro bando."""
+    bandi = foglio.leggi("BANDI")
+    scaduti = archivia_scaduti(foglio, bandi)
+    dettaglio = {f["ID"] for f in foglio.leggi("FONTI") if f.get("Connettore") == "listing"}
+    sbagliati = link_incoerenti(foglio.leggi("BANDI"), dettaglio)
+    adesso = iso(oggi())
+    foglio.aggiorna("BANDI", "ID", {i: {"Stato": "Archiviato", "Prossima azione": "", "Data prossima azione": "",
+                                        "Note": "Archiviato: il link portava a un altro bando (pagina con concorsi correlati)"}
+                                    for i in sbagliati})
+    return {"scaduti": scaduti, "link_sbagliati": len(sbagliati)}
+
+
 class Giro:
     def __init__(self, tipo: str, amb: Ambiente | None = None, foglio: FoglioBase | None = None):
         self.tipo = tipo
@@ -180,6 +247,8 @@ class Giro:
             return 0
         self.res.pagine += 1
         self.arch.segna(pagina.url, pagina.fonte, pagina.strutturato.get("hash") or hash_testo(pagina.testo))
+        if pagina.strutturato.get("dettaglio") and len(verificate) > 1:
+            verificate = [solo_principale(verificate, pagina)]
         return self.registra_verificate(pagina, verificate)
 
     def registra_verificate(self, pagina: Pagina, verificate: list[SchedaVerificata]) -> int:
@@ -349,6 +418,9 @@ class Giro:
 
     def esegui(self) -> Resoconto:
         inizio = time.monotonic()
+        n = archivia_scaduti(self.foglio, self.bandi, self.modifiche)
+        if n:
+            self.res.note.append(f"{n} bandi scaduti archiviati")
         self.elabora_coda()
         self.leggi_fonti()
         n = completa_coordinate(self)

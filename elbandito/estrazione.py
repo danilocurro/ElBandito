@@ -69,6 +69,48 @@ def citazione_presente(citazione: str, testo: str) -> bool:
     return len(c) >= 12 and fuzz.partial_ratio(c, t) >= 92
 
 
+MESI = {
+    "gen": 1, "jan": 1, "janv": 1, "feb": 2, "febr": 2, "fév": 2, "fev": 2, "mar": 3, "mär": 3, "apr": 4, "avr": 4,
+    "mag": 5, "may": 5, "mai": 5, "giu": 6, "jun": 6, "juin": 6, "lug": 7, "jul": 7, "juil": 7, "ago": 8, "aug": 8,
+    "aoû": 8, "aou": 8, "set": 9, "sett": 9, "sep": 9, "sept": 9, "ott": 10, "oct": 10, "okt": 10, "nov": 11,
+    "dic": 12, "dec": 12, "déc": 12, "dez": 12,
+}
+_MESE = r"([a-zàâäéèêëîïôöûüç]{3,10})\.?(?:[a-zàâäéèêëîïôöûüç]{3,10}\.?)?"  # anche bilingue: "Ago.Aug."
+_GIORNO_MESE_ANNO = re.compile(r"\b(\d{1,2})(?:°|º|st|nd|rd|th|er)?\s+(?:de\s+)?" + _MESE + r"\s+(?:de\s+)?(20\d{2})\b", re.I)
+_MESE_GIORNO_ANNO = re.compile(r"\b" + _MESE + r"\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})\b", re.I)
+_NUMERICA = re.compile(r"\b(\d{1,2})[./](\d{1,2})[./](20\d{2})\b")
+
+
+def _mese(nome: str) -> int | None:
+    nome = nome.lower()
+    for k in sorted(MESI, key=len, reverse=True):
+        if nome.startswith(k):
+            return MESI[k]
+    return None
+
+
+def cerca_date(testo: str) -> list[date]:
+    """Tutte le date complete (giorno, mese, anno) scritte nel testo, in più lingue, in ordine di apparizione."""
+    trovate = []
+    for m in _GIORNO_MESE_ANNO.finditer(testo or ""):
+        mese = _mese(m.group(2))
+        if mese:
+            trovate.append((m.start(), int(m.group(1)), mese, int(m.group(3))))
+    for m in _MESE_GIORNO_ANNO.finditer(testo or ""):
+        mese = _mese(m.group(1))
+        if mese:
+            trovate.append((m.start(), int(m.group(2)), mese, int(m.group(3))))
+    for m in _NUMERICA.finditer(testo or ""):
+        trovate.append((m.start(), int(m.group(1)), int(m.group(2)), int(m.group(3))))
+    out = []
+    for _, g, mm, a in sorted(trovate):
+        try:
+            out.append(date(a, mm, g))
+        except ValueError:
+            pass
+    return out
+
+
 def leggi_data(testo: str, rif: date | None = None) -> date | None:
     """Data da testo libero in più lingue ("entro il 15 aprile", "March 3rd")."""
     if not testo.strip():
@@ -79,8 +121,12 @@ def leggi_data(testo: str, rif: date | None = None) -> date | None:
             return date.fromisoformat(m.group(0))
         except ValueError:
             pass
+    complete = cerca_date(testo)  # una data con l'anno scritto vince: niente indovinelli
+    if complete:
+        return complete[0]
     pulito = re.sub(r"(?i)\b(di )?ogni anno\b|\bannualmente\b|\bevery year\b|\beach year\b", " ", testo)  # bandi ricorrenti
     pulito = re.sub(r"(?i)\b(entro( e non oltre)?( il)?|non oltre( il)?|scadenza|deadline|until|by|bis|avant le|ore|h\.?)\b", " ", pulito)
+    pulito = re.sub(r"(?i)\b(le )?ore \d{1,2}([:.]\d{2})?( del| dell'| di)?\b", " ", pulito)  # "entro le ore 12 del 9 febbraio"
     pulito = re.sub(r"(?i)\b\d{1,2}[:.]\d{2}\b.*$", "", pulito).strip(" :,-")
     d = dateparser.parse(
         pulito,
@@ -117,10 +163,15 @@ def verifica(scheda: SchedaEstratta, testo: str) -> SchedaVerificata | None:
                 setattr(scheda, dato, None)
             setattr(scheda, cit, "")
     scadenza = leggi_data(scheda.scadenza) if scheda.scadenza else None
-    if scheda.scadenza and scadenza is None:
-        confermata = False
+    if scadenza is None and scheda.scadenza_citazione:
+        date_frase = cerca_date(scheda.scadenza_citazione)  # la data è nella frase citata
+        scadenza = date_frase[0] if date_frase else None
     if scadenza is None:
         confermata = False
+        # nessuna scadenza: se tutte le date citate sono passate, il bando è vecchio
+        citate = cerca_date(" ".join([scheda.scadenza_citazione, scheda.date_attivita, scheda.apertura]))
+        if citate and max(citate) < oggi():
+            return None
     elif scadenza < oggi():
         return None
     return SchedaVerificata(scheda, scadenza, confermata, " · ".join(dict.fromkeys(frasi)))

@@ -74,6 +74,9 @@ def sincronizza_foglio(origine: FoglioBase, dest: FoglioBase) -> dict:
             modifiche[b["ID"]] = diff
     dest.aggiungi("BANDI", nuovi)
     dest.aggiorna("BANDI", "ID", modifiche)
+    from .pipeline import archivia_scaduti
+
+    archivia_scaduti(dest, dest.leggi("BANDI"))
     # fonti: elenco e stato come nel principale (sono la stessa rete)
     fonti = {f["ID"]: f for f in dest.leggi("FONTI")}
     nuove_fonti = [f for f in origine.leggi("FONTI") if f.get("ID") not in fonti]

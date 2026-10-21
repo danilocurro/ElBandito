@@ -56,3 +56,17 @@ def test_scadenze_ricorrenti():
     # avvisi annuali: "il 30 ottobre di ogni anno" vale come la prossima occorrenza
     assert leggi_data("entro e non oltre il 30 ottobre di ogni anno") == date(2026, 10, 30)
     assert leggi_data("March 1st every year") == date(2027, 3, 1)
+
+
+def test_date_complete_nel_testo():
+    assert leggi_data("Le candidature dovranno essere presentate entro le ore 12 del 9 febbraio 2026") == date(2026, 2, 9)
+    assert leggi_data("DeadlineLun. Mon. 17 Ago.Aug. 2026") == date(2026, 8, 17)
+    assert leggi_data("Entries close on 31 October 2026") == date(2026, 10, 31)
+    assert leggi_data("deadline January 20, 2027") == date(2027, 1, 20)
+    assert leggi_data("scadenza 15/01/2027") == date(2027, 1, 15)
+
+
+def test_scadenza_solo_nella_frase_e_passata(scheda_mare):
+    scheda_mare.scadenza = ""
+    scheda_mare.scadenza_citazione = "entro le ore 12 del 9 febbraio 2026"
+    assert verifica(scheda_mare, "Le candidature entro le ore 12 del 9 febbraio 2026.") is None

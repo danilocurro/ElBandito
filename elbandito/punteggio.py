@@ -185,6 +185,9 @@ def valuta(v: SchedaVerificata, profilo: Profilo, enti: list[dict], n_fonti: int
 
     totale = sum(pesi.values()) or 1
     punteggio = round(sum(frazioni[k] * pesi.get(k, 0) for k in frazioni) / totale * 100)
+    if v.scadenza is None:
+        punteggio = round(punteggio * 0.85)  # senza data non può superare un bando con scadenza chiara
+        rischi.append("Senza scadenza: controlla sul sito")
 
     if not v.confermata:
         rischi.append("Scadenza o requisiti da verificare sul sito")

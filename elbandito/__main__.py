@@ -11,6 +11,7 @@
   link URL      estrae un bando da un link incollato
   approfondisci ID   indagine "cerca a fondo" su un bando (giuria, vincitori, reputazione)
   ricalcola     ricalcola punteggi ed esclusioni dopo un cambio di PROFILO
+  pulizia       archivia i bandi scaduti e quelli con il link di un altro bando (anche nei fogli condivisi)
   coordinate    aggiunge le coordinate (mappa) ai bandi che non le hanno
   sincronizza   copia i bandi nei fogli condivisi (ELBANDITO_FOGLI_CONDIVISI)
   richiamo      misura copertura e richiamo sull'insieme d'oro
@@ -25,7 +26,7 @@ import sys
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="elbandito", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("comando", choices=["configura", "demo", "dashboard", "mcp", "coda", "prepara", "giornaliero", "settimanale", "link", "approfondisci", "ricalcola", "richiamo", "sincronizza", "coordinate"])
+    ap.add_argument("comando", choices=["configura", "demo", "dashboard", "mcp", "coda", "prepara", "giornaliero", "settimanale", "link", "approfondisci", "ricalcola", "richiamo", "sincronizza", "coordinate", "pulizia"])
     ap.add_argument("url", nargs="?", help="URL (link) o ID del bando (approfondisci)")
     ap.add_argument("-v", "--verboso", action="store_true")
     a = ap.parse_args(argv)
@@ -111,6 +112,16 @@ def main(argv: list[str] | None = None) -> int:
         from .pipeline import approfondisci
 
         print(approfondisci(a.url, amb))
+        return 0
+
+    if a.comando == "pulizia":
+        from .foglio import GoogleFoglio
+        from .pipeline import pulizia
+        from .sincronizza import fogli_condivisi
+
+        print("foglio principale:", pulizia(apri(amb)))
+        for sid in fogli_condivisi():
+            print(f"{sid[:8]}…:", pulizia(GoogleFoglio(Ambiente(sheet_id=sid, credenziali_google=amb.credenziali_google))))
         return 0
 
     if a.comando == "coordinate":

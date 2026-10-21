@@ -123,3 +123,29 @@ def test_soglia_di_qualita_per_fonte(tmp_path, monkeypatch, scheda_mare):
     res = pipeline.Giro("giornaliero", amb, foglio).esegui()
     assert res.nuovi == 0 and res.sotto_soglia == 1
     assert foglio.leggi("BANDI") == []
+
+
+def test_archivia_scaduti_e_solo_nuovi(tmp_path):
+    from elbandito.foglio import FoglioLocale
+
+    f = FoglioLocale(tmp_path)
+    f.prepara(con_seed=False)
+    f.aggiungi("BANDI", [
+        {"ID": "B0001", "Titolo": "Scaduto", "Stato": "Nuovo", "Scadenza": "2026-08-17"},
+        {"ID": "B0002", "Titolo": "Senza data ma vecchio", "Stato": "Nuovo", "Estratto": "entro le ore 12 del 9 febbraio 2026"},
+        {"ID": "B0003", "Titolo": "Lo sto preparando", "Stato": "Da preparare", "Scadenza": "2026-08-17"},
+        {"ID": "B0004", "Titolo": "Aperto", "Stato": "Nuovo", "Scadenza": "2026-12-01"},
+    ])
+    assert pipeline.archivia_scaduti(f, f.leggi("BANDI")) == 2
+    stati = {b["ID"]: b["Stato"] for b in f.leggi("BANDI")}
+    assert stati == {"B0001": "Archiviato", "B0002": "Archiviato", "B0003": "Da preparare", "B0004": "Nuovo"}
+
+
+def test_pagina_scheda_tiene_solo_il_bando_principale(scheda_mare):
+    from elbandito.connettori import Pagina
+    from elbandito.estrazione import SchedaVerificata
+
+    giusto = SchedaVerificata(scheda_mare.model_copy(update={"titolo": "Polverigi 2026 Photo Contest"}), None, False, "")
+    correlato = SchedaVerificata(scheda_mare.model_copy(update={"titolo": "Anna Cornelis Fund Grant"}), None, False, "")
+    pagina = Pagina(url="https://pixcontests.com/polverigi-2026-photo-contest", titolo="Polverigi 2026 Photo Contest", testo="", fonte="F45")
+    assert pipeline.solo_principale([correlato, giusto], pagina) is giusto
