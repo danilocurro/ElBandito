@@ -41,3 +41,4 @@ Ricerche settimanali,20,Numero massimo di ricerche web per giro
 Filoni ricerca,,Vuoto = filoni predefiniti; altrimenti separati da ;
 Link app,,Indirizzo da aprire dal pulsante delle email (es. la pagina del tuo sito); vuoto = la web app
 Progetto speciale,,Nome di un tuo progetto: attiva la scheda dedicata e il pulsante ★ nella scheda dei bandi (si segnano con una nota che inizia per quel nome). Vuoto = spento
+Parole progetto,,"Parole (separate da virgole) che mettono da sole un bando nella scheda del progetto speciale, es. tradizioni popolari, patrimonio immateriale. Vuoto = solo le note"

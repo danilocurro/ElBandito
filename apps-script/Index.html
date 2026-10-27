@@ -275,7 +275,17 @@ function reProgetto() {
   var n = nomeProgetto();
   return n ? new RegExp('^\\s*' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*[·:\\-–]?\\s*', 'i') : null;
 }
-function sudMagia(b) { var r = reProgetto(); return !!r && r.test(String(b.Note || '')); }
+/* Parole del profilo ("Parole progetto", separate da virgole): un bando che le contiene entra da solo nella scheda del progetto. */
+function paroleProgetto() {
+  return String((D && D.profilo && D.profilo['Parole progetto']) || '').toLowerCase().split(',').map(function (p) { return p.trim(); }).filter(Boolean);
+}
+function sudMagia(b) {
+  var r = reProgetto();
+  if (!r) return false;
+  if (r.test(String(b.Note || ''))) return true;
+  var testo = [b.Titolo, b.Temi, b.Disciplina, b.Estratto, b.Valore, b.Motivazione].join(' ').toLowerCase();
+  return paroleProgetto().some(function (p) { return testo.indexOf(p) >= 0; });
+}
 
 /** Bando ancora da valutare la cui scadenza è passata: non va tra i bandi attivi. */
 function scaduto(b) { var g = giorniA(b.Scadenza); return b.Stato === 'Nuovo' && g !== null && g < 0; }
@@ -591,7 +601,7 @@ var SEZIONI_PROFILO = [
   ['Come ti candidi (filtri rigidi)', ['Si candida come', 'Lingue', 'Quota massima', 'Giorni minimi preparazione', 'Disponibilità fuori casa (settimane)']],
   ['Il tuo lavoro', ['Temi', 'Curriculum', 'Parole chiave']],
   ['Pesi del punteggio', ['Peso disciplina', 'Peso tema', 'Peso geografia', 'Peso valore', 'Peso prestigio', 'Peso costo', 'Soglia avviso']],
-  ['Motori, modelli e link', ['Link app', 'Progetto speciale', 'Motore estrazione', 'Motore ricerca', 'Modello estrazione', 'Modello ripiego', 'Modello ricerca', 'Ricerche settimanali', 'Filoni ricerca']]
+  ['Motori, modelli e link', ['Link app', 'Progetto speciale', 'Parole progetto', 'Motore estrazione', 'Motore ricerca', 'Modello estrazione', 'Modello ripiego', 'Modello ricerca', 'Ricerche settimanali', 'Filoni ricerca']]
 ];
 var PRESET_PESI = {
   'equilibrato':    [25, 5, 10, 15, 15, 15],
