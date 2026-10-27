@@ -277,9 +277,13 @@ function reProgetto() {
 }
 function sudMagia(b) { var r = reProgetto(); return !!r && r.test(String(b.Note || '')); }
 
+/** Bando ancora da valutare la cui scadenza è passata: non va tra i bandi attivi. */
+function scaduto(b) { var g = giorniA(b.Scadenza); return b.Stato === 'Nuovo' && g !== null && g < 0; }
+
 function etichettaScadenza(b) {
   var g = giorniA(b.Scadenza);
   if (g === null) return '<span class="etichetta">senza scadenza</span>';
+  if (g < 0) return '<span class="etichetta rosso">scaduto</span> ' + dataBreve(b.Scadenza);
   var cls = g <= 7 ? 'rosso' : g <= 21 ? 'giallo' : '';
   var dubbio = b['Scadenza confermata'] === 'sicura' ? '' : ' <span class="etichetta giallo" title="Data estratta dall\'AI: conferma sul sito">da verificare</span>';
   return '<span class="etichetta ' + cls + '">' + (g === 0 ? 'oggi' : g + ' gg') + '</span> ' + dataBreve(b.Scadenza) + dubbio;
@@ -346,7 +350,7 @@ function disegna() {
 
 function vistaOggi() {
   var settimana = piuGiorni(D.oggi, -7);
-  var nuovi = D.bandi.filter(function (b) { return b.Stato === 'Nuovo' && !b.Esclusione && b['Trovato il'] >= settimana; }).sort(perPunteggio);
+  var nuovi = D.bandi.filter(function (b) { return b.Stato === 'Nuovo' && !scaduto(b) && !b.Esclusione && b['Trovato il'] >= settimana; }).sort(perPunteggio);
   var vicini = D.bandi.filter(function (b) { var g = giorniA(b.Scadenza); return aperto(b) && !b.Esclusione && g !== null && g >= 0 && g <= 14; }).sort(perScadenza);
   var azioni = D.bandi.filter(function (b) { return b['Data prossima azione'] && b['Data prossima azione'] <= D.oggi && aperto(b) && b.Stato !== 'Nuovo'; }).sort(perScadenza);
   var mancanti = D.bandi.filter(function (b) {
@@ -363,6 +367,7 @@ function filtrati() {
   var q = filtri.q.toLowerCase();
   return D.bandi.filter(function (b) {
     if (!filtri.esclusi && b.Esclusione) return false;
+    if (scaduto(b)) return false;
     if (['Scartato', 'Vinto', 'Non selezionato'].indexOf(b.Stato) >= 0 && !filtri.esclusi) return false;
     if (q && JSON.stringify([b.Titolo, b.Ente, b.Temi, b['Città'], b.Paese, b.Valore, b.Motivazione]).toLowerCase().indexOf(q) < 0) return false;
     if (filtri.tipo && b.Tipo !== filtri.tipo) return false;
@@ -460,7 +465,7 @@ function disegnaMappa(bandi) {
 function vistaPipeline() {
   var stati = ['Nuovo', 'Da preparare', 'Pronto', 'Inviato', 'In attesa edizione', 'Vinto', 'Non selezionato', 'Scartato'];
   return '<div class="colonne">' + stati.map(function (s) {
-    var qui = D.bandi.filter(function (b) { return b.Stato === s && (s !== 'Nuovo' || !b.Esclusione); })
+    var qui = D.bandi.filter(function (b) { return b.Stato === s && (s !== 'Nuovo' || (!b.Esclusione && !scaduto(b))); })
       .sort(s === 'Nuovo' ? perPunteggio : perScadenza);
     return '<div class="colonna"><h3>' + s + '<span>' + qui.length + '</span></h3>' + qui.slice(0, 60).map(function (b) {
       return '<div class="carta" onclick="apriBando(\'' + b.ID + '\')"><div class="titolo" style="font-size:14px">' + esc(b.Titolo) + '</div>' +

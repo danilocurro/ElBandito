@@ -36,7 +36,8 @@ Regole:
 o l'annuncio dei vincitori, restituisci "bandi": [].
 - Una pagina può contenerne più d'una (rubriche, elenchi): una scheda per opportunità.
 - Se il testo dice che il bando è già scaduto, chiuso o concluso (anche "edizione scaduta il…"), non estrarlo.
-- Per bandi ricorrenti con più finestre l'anno ("1-28 febbraio e 1-31 agosto"), scadenza = la prossima finestra futura.
+- Per bandi ricorrenti con più finestre l'anno ("1-28 febbraio e 1-31 agosto"), scadenza = la prossima finestra futura \
+scritta nel testo. Mai spostare di un anno una scadenza passata: se l'edizione indicata è chiusa, non estrarla.
 - Non inventare nulla. Un campo che il testo non dice resta vuoto (o null).
 - Per scadenza, quota ed eleggibilità copia nei campi *_citazione la frase ESATTA del testo, \
 carattere per carattere, da cui ricavi il dato. Se non c'è una frase, lascia vuoti dato e citazione.
@@ -165,9 +166,10 @@ def verifica(scheda: SchedaEstratta, testo: str) -> SchedaVerificata | None:
                 setattr(scheda, dato, None)
             setattr(scheda, cit, "")
     scadenza = leggi_data(scheda.scadenza) if scheda.scadenza else None
-    if scadenza is None and scheda.scadenza_citazione:
+    if scheda.scadenza_citazione:
         date_frase = cerca_date(scheda.scadenza_citazione)  # la data è nella frase citata
-        scadenza = date_frase[0] if date_frase else None
+        if date_frase and (scadenza is None or scadenza not in date_frase):
+            scadenza = date_frase[0]  # vale la data scritta nel testo, non una proiezione all'anno dopo
     if scadenza is None:
         confermata = False
         # nessuna scadenza: se tutte le date citate sono passate, il bando è vecchio
